@@ -1,0 +1,37 @@
+spring:
+  cache:
+    type: simple
+  codec:
+    max-in-memory-size: 128MB
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE:100MB}
+      max-request-size: ${MAX_REQUEST_SIZE:100MB}
+  mvc:
+    async:
+      request-timeout: -1
+  application:
+    name: ai_hub
+  datasource:
+    name: ${spring.application.name}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_ADDRESS:localhost:3306}/aihub?useUnicode=true&createDatabaseIfNotExist=true&characterEncoding=utf8&useCursorFetch=true&defaultFetchSize=500&allowMultiQueries=true&rewriteBatchedStatements=true&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:123456}
+  freemarker:
+    cache: true
+  flyway:
+    baseline-on-migrate: on
+
+server:
+  port: ${SERVER_PORT:9876}
+  forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+springdoc:
+  swagger-ui:
+    enabled: on
