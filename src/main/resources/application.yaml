@@ -35,3 +35,28 @@ management:
 springdoc:
   swagger-ui:
     enabled: on
+
+auth:
+  default-password: ${DEFAULT_PASSWORD:goodluck}
+
+s3:
+  access-key-id: ${S3_ACCESS_KEY:WcZgSbbXbuZUDSVPFy1K}
+  secret-access-key: ${S3_SECRET_KEY:wlik3MjyTIVja2dhyxCRygmn2ndfU67wq1HhEr3l}
+  endpoint: ${S3_ENDPOINT:http://192.168.2.56:9000}
+  public-endpoint: ${S3_PUBLIC_ENDPOINT:http://113.108.105.54:56800/store}
+  buckets:
+    tmpfile: ${S3_TMPFILE_BUCKET:tmpfile}
+    document: ${S3_DOCUMENT_BUCKET:document}
+    blocked: ${S3_BLOCKED_BUCKET:blocked}
+  cover:
+    dpi: ${COVER_DPI:300}
+
+jwt:
+  jwt-key: ${JWT_PRIVATE_KEY:/opt/keys/jwt_key}
+  key-id: ${JWT_KEY_ID:good_luck}
+  issuer: ${JWT_ISSUER:happy}
+  audience: ${JWT_AUDIENCE:happy}
+  expiration: ${JWT_TOKEN_EXPIRATION:24h}
+  # 临近超时时间10分钟内，会返回新的token
+  refresh-interval: ${JWT_TOKEN_REFRESH_INTERVAL:2h}
+  head: ${JWT_TOKEN_HEAD:auth}

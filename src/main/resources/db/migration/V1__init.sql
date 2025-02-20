@@ -20,6 +20,19 @@ CREATE TABLE `user_groups`
   COLLATE = utf8mb4_0900_ai_ci
   ROW_FORMAT = DYNAMIC;
 
+DROP TABLE IF EXISTS `user_group_maps`;
+CREATE TABLE `user_group_maps`
+(
+    `group_id`        char(32)                                                      NOT NULL,
+    `user_id`         char(32)                                                      NOT NULL,
+    `create_time`     datetime                                                      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time`     datetime                                                      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`group_id`, `user_id`) USING BTREE
+) ENGINE = InnoDB
+  CHARACTER SET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci
+  ROW_FORMAT = DYNAMIC;
+
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users`
 (
@@ -75,7 +88,7 @@ CREATE TABLE `assistants`
   ROW_FORMAT = DYNAMIC;
 
 DROP TABLE IF EXISTS `assistant_bases`;
-DROP TABLE IF EXISTS `knowledge_base_tags`;
+DROP TABLE IF EXISTS `assistant_bases`;
 CREATE TABLE assistant_bases (
      `assistant_id`   char(32)            NOT NULL,
      `base_id`        char(32)            NOT NULL,
