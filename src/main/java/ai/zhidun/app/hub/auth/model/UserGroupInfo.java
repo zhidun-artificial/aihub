@@ -1,6 +1,5 @@
 package ai.zhidun.app.hub.auth.model;
 
-import ai.zhidun.app.hub.auth.dao.UserGroup;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.fasterxml.jackson.databind.JsonNode;
 

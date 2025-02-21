@@ -3,8 +3,6 @@ package ai.zhidun.app.hub.auth.service.impl;
 import ai.zhidun.app.hub.auth.controller.UserGroupController.SearchUserGroups;
 import ai.zhidun.app.hub.auth.dao.*;
 import ai.zhidun.app.hub.auth.model.UserGroupInfo;
-import ai.zhidun.app.hub.auth.model.UserInfo;
-import ai.zhidun.app.hub.auth.service.JwtService;
 import ai.zhidun.app.hub.auth.service.JwtSupport;
 import ai.zhidun.app.hub.auth.service.UserGroupService;
 import ai.zhidun.app.hub.auth.service.UserService;
@@ -22,6 +20,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import lombok.SneakyThrows;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -142,5 +141,47 @@ public class UserGroupServiceImpl  extends ServiceImpl<UserGroupMapper, UserGrou
                 .eq(UserGroup::getId, id)
                 .set(UserGroup::getAlive, null);
         super.update(update);
+    }
+
+    @Override
+    @Transactional
+    public void deleteUser(String groupId, String userId) {
+        checkPermission(groupId);
+
+        mapMapper.delete(Wrappers
+                .lambdaQuery(UserGroupMap.class)
+                .eq(UserGroupMap::getGroupId, groupId)
+                .eq(UserGroupMap::getUserId, userId)
+        );
+    }
+
+    private void checkPermission(String groupId) {
+        UserGroup target = this.getById(groupId);
+        if (target == null) {
+            throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("组织不存在!"));
+        }
+        String currentUserId = JwtSupport.userId();
+        // todo add superAdmin check
+        if (!target.getCreator().equals(currentUserId)) {
+            throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("无操作权限!"));
+        }
+    }
+
+    @Override
+    @Transactional
+    public void addUser(String groupId, String userId) {
+        checkPermission(groupId);
+
+        LambdaQueryWrapper<UserGroupMap> wrapper = Wrappers
+                .lambdaQuery(UserGroupMap.class)
+                .eq(UserGroupMap::getGroupId, groupId)
+                .eq(UserGroupMap::getUserId, userId);
+        if (!mapMapper.exists(wrapper)) {
+            UserGroupMap entity = new UserGroupMap();
+            entity.setGroupId(groupId);
+            entity.setUserId(userId);
+            mapMapper.insert(entity);
+        }
+
     }
 }

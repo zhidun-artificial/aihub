@@ -47,6 +47,22 @@ public class UserGroupController {
         return Response.page(service.search(request));
     }
 
+    public record AddUser(String groupId, String userId) {
+
+    }
+
+    @PostMapping("/add_user")
+    public Response<Empty> addUser(@RequestBody AddUser request) {
+        service.addUser(request.groupId(), request.userId());
+        return Response.ok();
+    }
+
+    @PostMapping("/delete_user")
+    public Response<Empty> delUser(@RequestBody AddUser request) {
+        service.deleteUser(request.groupId(), request.userId());
+        return Response.ok();
+    }
+
     public record CreateUserGroup(String name, String description, @JsonAnySetter JsonNode ext) {
 
     }

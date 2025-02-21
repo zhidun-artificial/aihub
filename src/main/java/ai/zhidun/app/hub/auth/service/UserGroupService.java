@@ -14,4 +14,8 @@ public interface UserGroupService {
     UserGroupInfo update(String id, String description, JsonNode ext);
 
     void delete(String id);
+
+    void deleteUser(String groupId, String userId);
+
+    void addUser(String groupId, String userId);
 }
