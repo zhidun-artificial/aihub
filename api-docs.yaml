@@ -1,0 +1,1199 @@
+openapi: 3.1.0
+info:
+  title: Ai知识服务后端
+  version: "0.1"
+servers:
+- url: http://localhost:9876
+  description: Generated server url
+tags:
+- name: 屏蔽管理
+  description: 屏蔽相关接口
+- name: 用户组服务
+  description: 用户组相关接口
+- name: 文档管理
+  description: 文档相关接口
+- name: 知识库管理
+  description: 知识库相关接口
+- name: 用户服务
+  description: 用户相关接口
+- name: 认证服务
+  description: 用户认证相关接口
+paths:
+  /api/v1/user_groups/{id}:
+    put:
+      tags:
+      - 用户组服务
+      operationId: update
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserGroup"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseUserGroupInfo"
+      security:
+      - auth: []
+    delete:
+      tags:
+      - 用户组服务
+      operationId: delete
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseEmpty"
+      security:
+      - auth: []
+  /api/v1/knowledge_base:
+    put:
+      tags:
+      - 知识库管理
+      operationId: update_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateKnowledgeBase"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseKnowledgeBaseVo"
+      security:
+      - auth: []
+    post:
+      tags:
+      - 知识库管理
+      operationId: create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateKnowledgeBase"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseKnowledgeBaseVo"
+      security:
+      - auth: []
+  /api/v1/documents/{id}/replace:
+    put:
+      tags:
+      - 文档管理
+      operationId: replace
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required:
+              - file
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseReplaceResult"
+      security:
+      - auth: []
+  /api/v1/documents/{id}/rename:
+    put:
+      tags:
+      - 文档管理
+      operationId: rename
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseEmpty"
+      security:
+      - auth: []
+  /api/v1/blocked_words:
+    put:
+      tags:
+      - 屏蔽管理
+      operationId: update_2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBlockedWord"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseBlockedWordVo"
+      security:
+      - auth: []
+    post:
+      tags:
+      - 屏蔽管理
+      operationId: create_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBlockedWord"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseBlockedWordVo"
+      security:
+      - auth: []
+  /api/v1/users:
+    post:
+      tags:
+      - 用户服务
+      operationId: create_2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUser"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseUserInfo"
+      security:
+      - auth: []
+  /api/v1/users/search:
+    post:
+      tags:
+      - 用户服务
+      operationId: search
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchUsers"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponsePageVoUserInfo"
+      security:
+      - auth: []
+  /api/v1/users/import:
+    post:
+      tags:
+      - 用户服务
+      operationId: importByXlsx
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/ImportUsers"
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseInteger"
+      security:
+      - auth: []
+  /api/v1/user_groups:
+    post:
+      tags:
+      - 用户组服务
+      operationId: create_3
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserGroup"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseUserGroupInfo"
+      security:
+      - auth: []
+  /api/v1/user_groups/search:
+    post:
+      tags:
+      - 用户组服务
+      operationId: search_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchUserGroups"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponsePageVoUserGroupInfo"
+      security:
+      - auth: []
+  /api/v1/user_groups/delete_user:
+    post:
+      tags:
+      - 用户组服务
+      operationId: delUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddUser"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseEmpty"
+      security:
+      - auth: []
+  /api/v1/user_groups/add_user:
+    post:
+      tags:
+      - 用户组服务
+      operationId: addUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddUser"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseEmpty"
+      security:
+      - auth: []
+  /api/v1/knowledge_base/search:
+    post:
+      tags:
+      - 知识库管理
+      operationId: search_2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchKnowledgeBase"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponsePageVoKnowledgeBaseVo"
+      security:
+      - auth: []
+  /api/v1/documents/upload:
+    post:
+      tags:
+      - 文档管理
+      operationId: upload
+      parameters:
+      - name: baseId
+        in: query
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+              required:
+              - files
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseSaveResult"
+      security:
+      - auth: []
+  /api/v1/documents/search:
+    post:
+      tags:
+      - 文档管理
+      operationId: search_3
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchDocument"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponsePageVoDocumentVo"
+      security:
+      - auth: []
+  /api/v1/documents/blocked_document/search:
+    post:
+      tags:
+      - 文档管理
+      operationId: searchBlocked
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchDocument"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponsePageVoDocumentVo"
+      security:
+      - auth: []
+  /api/v1/blocked_words/search:
+    post:
+      tags:
+      - 屏蔽管理
+      operationId: search_4
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchBlockedWord"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponsePageVoBlockedWordVo"
+      security:
+      - auth: []
+  /api/v1/auth/register:
+    post:
+      tags:
+      - 认证服务
+      - "test[for remove]"
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseUserInfo"
+  /api/v1/auth/login:
+    post:
+      tags:
+      - 认证服务
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseLoginResult"
+  /api/v1/blocked_words/all:
+    get:
+      tags:
+      - 屏蔽管理
+      operationId: all
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseListBlockedWordVo"
+      security:
+      - auth: []
+  /api/v1/users/{id}:
+    delete:
+      tags:
+      - 用户服务
+      operationId: delete_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseEmpty"
+      security:
+      - auth: []
+  /api/v1/knowledge_base/{id}:
+    delete:
+      tags:
+      - 知识库管理
+      operationId: delete_2
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseEmpty"
+      security:
+      - auth: []
+  /api/v1/documents/{id}:
+    delete:
+      tags:
+      - 文档管理
+      operationId: delete_3
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseEmpty"
+      security:
+      - auth: []
+  /api/v1/blocked_words/{id}:
+    delete:
+      tags:
+      - 屏蔽管理
+      operationId: delete_4
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseEmpty"
+      security:
+      - auth: []
+  /api/v1/blocked_words/{id}/enable:
+    delete:
+      tags:
+      - 屏蔽管理
+      operationId: enable
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseEmpty"
+      security:
+      - auth: []
+  /api/v1/blocked_words/{id}/disable:
+    delete:
+      tags:
+      - 屏蔽管理
+      operationId: disable
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseEmpty"
+      security:
+      - auth: []
+components:
+  schemas:
+    JsonNode:
+      type: object
+    UpdateUserGroup:
+      type: object
+      properties:
+        description:
+          type: string
+        ext:
+          $ref: "#/components/schemas/JsonNode"
+    ResponseUserGroupInfo:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/UserGroupInfo"
+    UserGroupInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        userCount:
+          type: integer
+          format: int32
+        creatorName:
+          type: string
+        description:
+          type: string
+        ext:
+          $ref: "#/components/schemas/JsonNode"
+        createTime:
+          type: integer
+          format: int64
+        updateTime:
+          type: integer
+          format: int64
+    UpdateKnowledgeBase:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        embedModel:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        ext:
+          $ref: "#/components/schemas/JsonNode"
+    KnowledgeBaseVo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        creator:
+          type: string
+        creatorName:
+          type: string
+        docCount:
+          type: integer
+          format: int32
+        ext:
+          $ref: "#/components/schemas/JsonNode"
+        createTime:
+          type: integer
+          format: int64
+        updateTime:
+          type: integer
+          format: int64
+    ResponseKnowledgeBaseVo:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/KnowledgeBaseVo"
+    DocumentVo:
+      type: object
+      properties:
+        id:
+          type: string
+        baseId:
+          type: string
+        title:
+          type: string
+        fileName:
+          type: string
+        url:
+          type: string
+        creator:
+          type: string
+        creatorName:
+          type: string
+        blockedReason:
+          type: string
+        createTime:
+          type: integer
+          format: int64
+        updateTime:
+          type: integer
+          format: int64
+    ReplaceResult:
+      type: object
+      properties:
+        replaced:
+          $ref: "#/components/schemas/DocumentVo"
+        unknown:
+          $ref: "#/components/schemas/Unknown"
+    ResponseReplaceResult:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/ReplaceResult"
+    Unknown:
+      type: object
+      properties:
+        fileName:
+          type: string
+        contentType:
+          type: string
+    Empty:
+      type: object
+    ResponseEmpty:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/Empty"
+    UpdateBlockedWord:
+      type: object
+      properties:
+        id:
+          type: string
+        value:
+          type: string
+    BlockedWordVo:
+      type: object
+      properties:
+        id:
+          type: string
+        value:
+          type: string
+        enabled:
+          type: boolean
+        createTime:
+          type: integer
+          format: int64
+    ResponseBlockedWordVo:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/BlockedWordVo"
+    CreateUser:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    ResponseUserInfo:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/UserInfo"
+    UserInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        createTime:
+          type: integer
+          format: int64
+        updateTime:
+          type: integer
+          format: int64
+    SearchUsers:
+      type: object
+      properties:
+        key:
+          type: string
+          description: 按名字检索
+        groupId:
+          type: string
+        pageNo:
+          type: integer
+          format: int32
+          default: "1"
+          description: 从1开始
+        pageSize:
+          type: integer
+          format: int32
+          default: "20"
+        sort:
+          type: string
+          enum:
+          - CREATED_AT_ASC
+          - CREATED_AT_DESC
+          - UPDATED_AT_ASC
+          - UPDATED_AT_DESC
+    PageVoUserInfo:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int64
+        pageSize:
+          type: integer
+          format: int64
+        pageNo:
+          type: integer
+          format: int64
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserInfo"
+    ResponsePageVoUserInfo:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/PageVoUserInfo"
+    ImportUsers:
+      type: object
+      properties:
+        xlsx:
+          type: string
+          format: binary
+    ResponseInteger:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          type: integer
+          format: int32
+    CreateUserGroup:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        ext:
+          $ref: "#/components/schemas/JsonNode"
+    SearchUserGroups:
+      type: object
+      properties:
+        key:
+          type: string
+          description: 按名字检索
+        pageNo:
+          type: integer
+          format: int32
+          default: "1"
+          description: 从1开始
+        pageSize:
+          type: integer
+          format: int32
+          default: "20"
+        sort:
+          type: string
+          enum:
+          - CREATED_AT_ASC
+          - CREATED_AT_DESC
+          - UPDATED_AT_ASC
+          - UPDATED_AT_DESC
+    PageVoUserGroupInfo:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int64
+        pageSize:
+          type: integer
+          format: int64
+        pageNo:
+          type: integer
+          format: int64
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserGroupInfo"
+    ResponsePageVoUserGroupInfo:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/PageVoUserGroupInfo"
+    AddUser:
+      type: object
+      properties:
+        groupId:
+          type: string
+        userId:
+          type: string
+    CreateKnowledgeBase:
+      type: object
+      properties:
+        name:
+          type: string
+        embedModel:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        permit:
+          type: integer
+          format: int32
+          description: 1-私密 2-团队 3-公开
+        ext:
+          $ref: "#/components/schemas/JsonNode"
+    SearchKnowledgeBase:
+      type: object
+      properties:
+        key:
+          type: string
+          description: 按名字检索
+        pageNo:
+          type: integer
+          format: int32
+          default: "1"
+          description: 从1开始
+        pageSize:
+          type: integer
+          format: int32
+          default: "20"
+        sort:
+          type: string
+          enum:
+          - CREATED_AT_ASC
+          - CREATED_AT_DESC
+          - UPDATED_AT_ASC
+          - UPDATED_AT_DESC
+    PageVoKnowledgeBaseVo:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int64
+        pageSize:
+          type: integer
+          format: int64
+        pageNo:
+          type: integer
+          format: int64
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/KnowledgeBaseVo"
+    ResponsePageVoKnowledgeBaseVo:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/PageVoKnowledgeBaseVo"
+    ResponseSaveResult:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/SaveResult"
+    SaveResult:
+      type: object
+      properties:
+        saved:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentVo"
+        unknowns:
+          type: array
+          items:
+            $ref: "#/components/schemas/Unknown"
+    SearchDocument:
+      type: object
+      properties:
+        key:
+          type: string
+          description: 按名字检索
+        baseId:
+          type: string
+          description: 知识库id
+        pageNo:
+          type: integer
+          format: int32
+          default: "1"
+          description: 从1开始
+        pageSize:
+          type: integer
+          format: int32
+          default: "20"
+        sort:
+          type: string
+          enum:
+          - CREATED_AT_ASC
+          - CREATED_AT_DESC
+          - UPDATED_AT_ASC
+          - UPDATED_AT_DESC
+    PageVoDocumentVo:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int64
+        pageSize:
+          type: integer
+          format: int64
+        pageNo:
+          type: integer
+          format: int64
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentVo"
+    ResponsePageVoDocumentVo:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/PageVoDocumentVo"
+    CreateBlockedWord:
+      type: object
+      properties:
+        value:
+          type: string
+    SearchBlockedWord:
+      type: object
+      properties:
+        key:
+          type: string
+          description: 按名字检索
+        pageNo:
+          type: integer
+          format: int32
+          default: "1"
+          description: 从1开始
+        pageSize:
+          type: integer
+          format: int32
+          default: "20"
+    PageVoBlockedWordVo:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int64
+        pageSize:
+          type: integer
+          format: int64
+        pageNo:
+          type: integer
+          format: int64
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/BlockedWordVo"
+    ResponsePageVoBlockedWordVo:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/PageVoBlockedWordVo"
+    RegisterRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    LoginResult:
+      type: object
+      properties:
+        info:
+          $ref: "#/components/schemas/UserInfo"
+        token:
+          type: string
+    ResponseLoginResult:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/LoginResult"
+    ResponseListBlockedWordVo:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/BlockedWordVo"
+  securitySchemes:
+    auth:
+      type: apiKey
+      name: auth
+      in: header
