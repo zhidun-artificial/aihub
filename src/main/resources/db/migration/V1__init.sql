@@ -51,8 +51,8 @@ CREATE TABLE `users`
   ROW_FORMAT = DYNAMIC;
 
 
-DROP TABLE IF EXISTS `forbidden_words`;
-CREATE TABLE `forbidden_words`
+DROP TABLE IF EXISTS blocked_words;
+CREATE TABLE blocked_words
 (
     `id`          char(32)                                                     NOT NULL,
     `value`       varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL,
@@ -115,19 +115,11 @@ CREATE TABLE `knowledge_base`
   COLLATE = utf8mb4_0900_ai_ci
   ROW_FORMAT = DYNAMIC;
 
-
-DROP TABLE IF EXISTS `tags`;
-CREATE TABLE tags (
-                      `id`    INT AUTO_INCREMENT PRIMARY KEY,
-                      `name`  VARCHAR(255) NOT NULL ,
-                      UNIQUE KEY `unique_tag_name` (`name`) USING BTREE
-);
-
 DROP TABLE IF EXISTS `knowledge_base_tags`;
 CREATE TABLE knowledge_base_tags (
     `base_id`   char(32)            NOT NULL,
-    `tag_id`     INT                 NOT NULL,
-     PRIMARY KEY (base_id, `tag_id`)
+    `tag`     VARCHAR(50)           NOT NULL,
+     PRIMARY KEY (base_id, `tag`)
 );
 
 DROP TABLE IF EXISTS `documents`;

@@ -25,7 +25,9 @@
         <pdfbox.version>3.0.3</pdfbox.version>
         <easyexcel.version>4.0.3</easyexcel.version>
         <uuid-creator.version>5.2.0</uuid-creator.version>
+        <langchain4j.version>1.0.0-beta1</langchain4j.version>
     </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.alibaba</groupId>
@@ -98,6 +100,10 @@
             <artifactId>s3</artifactId>
         </dependency>
         <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-document-parser-apache-tika</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
         </dependency>
@@ -135,11 +141,6 @@
                 <version>${springdoc.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.xerial</groupId>
-                <artifactId>sqlite-jdbc</artifactId>
-                <version>${sqlite-jdbc.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.bitbucket.b_c</groupId>
                 <artifactId>jose4j</artifactId>
                 <version>${jose4j.version}</version>
@@ -170,6 +171,11 @@
                 <groupId>com.alibaba</groupId>
                 <artifactId>easyexcel</artifactId>
                 <version>${easyexcel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.langchain4j</groupId>
+                <artifactId>langchain4j-document-parser-apache-tika</artifactId>
+                <version>${langchain4j.version}</version>
             </dependency>
         </dependencies>
 

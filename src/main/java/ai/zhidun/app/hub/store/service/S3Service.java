@@ -1,7 +1,7 @@
 package ai.zhidun.app.hub.store.service;
 
 import ai.zhidun.app.hub.store.config.S3Properties;
-import ai.zhidun.app.hub.store.utils.FileParser;
+import ai.zhidun.app.hub.store.utils.FileParser.ParsedResult;
 import jakarta.annotation.PreDestroy;
 import org.springframework.http.ContentDisposition;
 import org.springframework.stereotype.Service;
@@ -65,7 +65,7 @@ public class S3Service implements AutoCloseable {
         );
     }
 
-    public void put(String bucket, String key, FileParser.ParsedResult file) {
+    public void put(String bucket, String key, ParsedResult file) {
         String contentDisposition = getContentDisposition(file.fileName());
 
         client.putObject(builder -> builder

@@ -48,8 +48,6 @@ s3:
     tmpfile: ${S3_TMPFILE_BUCKET:tmpfile}
     document: ${S3_DOCUMENT_BUCKET:document}
     blocked: ${S3_BLOCKED_BUCKET:blocked}
-  cover:
-    dpi: ${COVER_DPI:300}
 
 jwt:
   jwt-key: ${JWT_PRIVATE_KEY:/opt/keys/jwt_key}

@@ -1,6 +1,5 @@
 package ai.zhidun.app.hub.common;
 
-import com.baomidou.mybatisplus.core.incrementer.DefaultIdentifierGenerator;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
@@ -20,6 +19,10 @@ public final class CustomIdentifierGenerator implements IdentifierGenerator {
 
     @Override
     public String nextUUID(Object entity) {
+        return CustomIdentifierGenerator.uuidV7();
+    }
+
+    public static String uuidV7() {
         UUID uuid = UuidCreator.getTimeOrderedEpoch();
         return uuid.toString().replace(StringPool.DASH, StringPool.EMPTY);
     }
