@@ -12,6 +12,8 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +42,9 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
         return from(entity, null);
     }
 
+    private final JsonMapper mapper = new JsonMapper();
+
+    @SneakyThrows
     public KnowledgeBaseVo from(KnowledgeBase entity, Integer docCount) {
         String creatorName = userService.name(entity.getCreator());
         return new KnowledgeBaseVo(
@@ -48,6 +53,7 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
                 entity.getCreator(),
                 creatorName,
                 docCount,
+                mapper.readTree(entity.getExt()),
                 entity.getCreateTime().getTime(),
                 entity.getUpdateTime().getTime());
     }
@@ -80,10 +86,18 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
         // todo update vector store
 
         KnowledgeBase entity = this.getById(update.id());
-        entity.setName(update.name());
-        entity.setEmbedModel(update.embedModel());
-        entity.setDescription(update.description());
-        entity.setExt(update.ext().toPrettyString());
+        if (entity.getName() != null) {
+            entity.setName(update.name());
+        }
+        if (entity.getEmbedModel() != null) {
+            entity.setEmbedModel(update.embedModel());
+        }
+        if (entity.getDescription() != null) {
+            entity.setDescription(update.description());
+        }
+        if (entity.getExt() != null) {
+            entity.setExt(update.ext().toPrettyString());
+        }
         this.updateById(entity);
 
         if (update.tags() instanceof List<String> list && !list.isEmpty()) {

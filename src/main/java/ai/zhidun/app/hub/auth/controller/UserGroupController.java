@@ -6,8 +6,8 @@ import ai.zhidun.app.hub.common.Response;
 import ai.zhidun.app.hub.common.Response.Empty;
 import ai.zhidun.app.hub.common.Response.PageVo;
 import ai.zhidun.app.hub.common.Sort;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,7 +38,7 @@ public class UserGroupController {
             this.key = key;
             this.pageNo = pageNo != null ? pageNo : 1;
             this.pageSize = pageSize != null ? pageSize : 20;
-            this.sort = sort != null ? sort: Sort.CREATED_AT_DESC;
+            this.sort = sort != null ? sort : Sort.CREATED_AT_DESC;
         }
     }
 
@@ -63,8 +63,13 @@ public class UserGroupController {
         return Response.ok();
     }
 
-    public record CreateUserGroup(String name, String description, @JsonAnySetter JsonNode ext) {
+    public record CreateUserGroup(String name, String description, JsonNode ext) {
 
+        public CreateUserGroup(String name, String description, JsonNode ext) {
+            this.name = name;
+            this.description = description;
+            this.ext = ext != null ? ext : JsonNodeFactory.instance.objectNode();
+        }
     }
 
     @PostMapping
@@ -73,7 +78,7 @@ public class UserGroupController {
         return Response.ok(info);
     }
 
-    public record UpdateUserGroup(String description, @JsonAnySetter JsonNode ext) {
+    public record UpdateUserGroup(String description, JsonNode ext) {
 
     }
 

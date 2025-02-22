@@ -2,7 +2,6 @@ package ai.zhidun.app.hub.store.utils;
 
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.parser.apache.tika.ApacheTikaDocumentParser;
-import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -57,15 +56,26 @@ public class FileParser {
         }
     }
 
-    @SneakyThrows
     public ParsedResult parse(MultipartFile file) {
         String contentType = file.getContentType();
         String fileName = file.getOriginalFilename();
         try {
             Document document = this.parser.parse(file.getInputStream());
-            return new Success(document, contentType, fileName, file::getInputStream);
+            return new Success(document, contentType, fileName, () -> {
+                try {
+                    return file.getInputStream();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         } catch (RuntimeException | IOException e) {
-            return new Failure(e.getMessage(), e, contentType, fileName, file::getInputStream);
+            return new Failure(e.getMessage(), e, contentType, fileName, () -> {
+                try {
+                    return file.getInputStream();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
         }
     }
 
