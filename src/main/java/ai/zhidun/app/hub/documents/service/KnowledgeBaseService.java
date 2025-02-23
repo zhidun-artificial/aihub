@@ -5,6 +5,8 @@ import ai.zhidun.app.hub.documents.model.KnowledgeBaseVo;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.store.embedding.EmbeddingStore;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
@@ -59,4 +61,12 @@ public interface KnowledgeBaseService {
     IPage<KnowledgeBaseVo> search(KnowledgeBaseController.SearchKnowledgeBase search);
 
     Optional<KnowledgeBaseVo> getFistByName(String libraryName);
+
+    EmbeddingStore<TextSegment> embeddingStore(String id);
+
+
+    record BaseInfo(String id, String name) {
+    }
+
+    List<BaseInfo> listBaseInfo(List<String> ids);
 }

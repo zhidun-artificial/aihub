@@ -13,15 +13,14 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.store.embedding.EmbeddingStore;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, KnowledgeBase> implements KnowledgeBaseService {
@@ -178,5 +177,25 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
         } else {
             return Optional.of(this.from(list.getFirst()));
         }
+    }
+
+    @Override
+    public EmbeddingStore<TextSegment> embeddingStore(String id) {
+        //todo
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public List<BaseInfo> listBaseInfo(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return this.lambdaQuery()
+                .in(KnowledgeBase::getId, ids)
+                .select(KnowledgeBase::getId, KnowledgeBase::getName)
+                .list()
+                .stream()
+                .map(e -> new BaseInfo(e.getId(), e.getName()))
+                .toList();
     }
 }

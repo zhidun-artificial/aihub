@@ -12,10 +12,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.http.ContentStreamProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.BucketCannedACL;
-import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
-import software.amazon.awssdk.services.s3.model.MetadataDirective;
-import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
+import software.amazon.awssdk.services.s3.model.*;
 
 import java.net.URI;
 import java.net.URLEncoder;
@@ -23,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 @Service
 public class S3Service implements AutoCloseable {
 
@@ -77,6 +75,41 @@ public class S3Service implements AutoCloseable {
         );
     }
 
+    public void put(String bucket, String key, ParsedResult file, Tag... tags) {
+        String contentDisposition = getContentDisposition(file.fileName());
+
+        Tagging tagging = Tagging.builder().tagSet(tags).build();
+
+        client.putObject(builder -> builder
+                        .bucket(bucket)
+                        .key(key)
+                        .tagging(tagging)
+                        .contentDisposition(contentDisposition),
+                RequestBody.fromContentProvider(ContentStreamProvider.fromInputStreamSupplier(file::getInputStream),
+                        Objects.requireNonNull(file.contentType()))
+        );
+    }
+
+    public void setTags(String bucket, String key, Tag... tags) {
+        client.putObjectTagging(b -> b
+                .bucket(bucket)
+                .key(key)
+                .tagging(t -> t.tagSet(tags)));
+    }
+
+    public void setFilter(String bucket, int days, Tag filterTag) {
+        LifecycleRule rule = LifecycleRule.builder()
+                .id("ttl-rule")
+                .status(ExpirationStatus.ENABLED)
+                .expiration(lb -> lb.days(days))
+                .filter(fb -> fb.tag(filterTag))
+                .build();
+
+        client.putBucketLifecycleConfiguration(b -> b
+                .bucket(bucket)
+                .lifecycleConfiguration(lc -> lc.rules(rule)));
+    }
+
     public void putCover(String bucket, String key, byte[] jpeg) {
         String contentDisposition = getContentDisposition("cover.jpeg");
 
@@ -128,8 +161,10 @@ public class S3Service implements AutoCloseable {
                     .bucket(bucket)
                     .acl(BucketCannedACL.PUBLIC_READ)
             );
+
         }
     }
+
 
     public void delete(String bucket, String key) {
         client.deleteObject(b -> b

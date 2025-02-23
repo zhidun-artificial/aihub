@@ -47,7 +47,8 @@ public class WebSecurityConfig {
                                 // swagger and openapi 3.0
                                 "/swagger-ui*/**",
                                 "/v3/**",
-                                "/manager/api/**"
+                                "/manager/api/**",
+                                "/test/**"
                         )
                         .permitAll()
                         .requestMatchers("/api/**")
@@ -55,6 +56,20 @@ public class WebSecurityConfig {
                         .anyRequest()
                         .anonymous()
                         .withObjectPostProcessor(objectPostProcessor)
+                )
+                .exceptionHandling(c -> c
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(403);
+                            response.setContentType("application/json");
+                            response.setCharacterEncoding("utf-8");
+                            response.getWriter().write("{\"code\":403,\"msg\":\"" + accessDeniedException.getMessage() + "\"}");
+                        })
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(401);
+                            response.setContentType("application/json");
+                            response.setCharacterEncoding("utf-8");
+                            response.getWriter().write("{\"code\":401,\"msg\":\"" + authException.getMessage() + "\"}");
+                        })
                 )
                 .sessionManagement(c -> c
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

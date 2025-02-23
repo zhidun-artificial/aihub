@@ -87,6 +87,37 @@ CREATE TABLE `assistants`
   COLLATE = utf8mb4_0900_ai_ci
   ROW_FORMAT = DYNAMIC;
 
+DROP TABLE IF EXISTS `conversations`;
+CREATE TABLE `conversations`
+(
+    `id`            char(32)                                                      NOT NULL,
+    `assistant_id`  char(32)                                                      NOT NULL,
+    `name`          varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  NULL,
+    `creator`       char(32)                                                      NULL,
+    `create_time`   datetime                                                      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time`   datetime                                                      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB
+  CHARACTER SET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci
+  ROW_FORMAT = DYNAMIC;
+
+DROP TABLE IF EXISTS `messages`;
+CREATE TABLE `messages`
+(
+    `id`            char(32)                                                      NOT NULL,
+    `conversation_id` char(32)                                                    NOT NULL,
+    `query`         text                                                          NULL,
+    `answer`        text                                                          NULL,
+    `context`       longtext                                                      NULL,
+    `create_time`   datetime                                                      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time`   datetime                                                      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB
+  CHARACTER SET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci
+  ROW_FORMAT = DYNAMIC;
+
 DROP TABLE IF EXISTS `assistant_bases`;
 DROP TABLE IF EXISTS `assistant_bases`;
 CREATE TABLE assistant_bases (

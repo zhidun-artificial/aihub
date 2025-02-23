@@ -10,12 +10,18 @@ tags:
   description: 屏蔽相关接口
 - name: 用户组服务
   description: 用户组相关接口
+- name: ai助手管理
+  description: ai助手相关接口
 - name: 文档管理
   description: 文档相关接口
+- name: 对话管理
+  description: 对话相关接口
 - name: 知识库管理
   description: 知识库相关接口
 - name: 用户服务
   description: 用户相关接口
+- name: 临时文件管理
+  description: 临时文件相关接口
 - name: 认证服务
   description: 用户认证相关接口
 paths:
@@ -198,11 +204,50 @@ paths:
                 $ref: "#/components/schemas/ResponseBlockedWordVo"
       security:
       - auth: []
+  /api/v1/assistants:
+    put:
+      tags:
+      - ai助手管理
+      operationId: update_3
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssistantUpdateParam"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseAssistantVo"
+      security:
+      - auth: []
+    post:
+      tags:
+      - ai助手管理
+      operationId: create_2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssistantCreateParam"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseAssistantVo"
+      security:
+      - auth: []
   /api/v1/users:
     post:
       tags:
       - 用户服务
-      operationId: create_2
+      operationId: create_3
       requestBody:
         content:
           application/json:
@@ -261,7 +306,7 @@ paths:
     post:
       tags:
       - 用户组服务
-      operationId: create_3
+      operationId: create_4
       requestBody:
         content:
           application/json:
@@ -337,6 +382,34 @@ paths:
                 $ref: "#/components/schemas/ResponseEmpty"
       security:
       - auth: []
+  /api/v1/tmpfile:
+    post:
+      tags:
+      - 临时文件管理
+      description: 临时文件上传接口
+      operationId: upload
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+              required:
+              - files
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseListUploadResult"
+      security:
+      - auth: []
   /api/v1/knowledge_base/search:
     post:
       tags:
@@ -361,7 +434,7 @@ paths:
     post:
       tags:
       - 文档管理
-      operationId: upload
+      operationId: upload_1
       parameters:
       - name: baseId
         in: query
@@ -430,11 +503,109 @@ paths:
                 $ref: "#/components/schemas/ResponsePageVoDocumentVo"
       security:
       - auth: []
+  /api/v1/chat/conversations/search:
+    post:
+      tags:
+      - 对话管理
+      operationId: search_4
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchConversation"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponsePageVoConversationVo"
+      security:
+      - auth: []
+  /api/v1/chat/conversations/messages/search:
+    post:
+      tags:
+      - 对话管理
+      operationId: messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchMessage"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponsePageVoMessageVo"
+      security:
+      - auth: []
+  /api/v1/chat/conversations/chat_with_assistant:
+    post:
+      tags:
+      - 对话管理
+      operationId: newChat
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssistantChatParam"
+        required: true
+      responses:
+        "400":
+          description: BAD Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BizError"
+        "200":
+          description: OK
+          content:
+            text/event-stream:
+              schema:
+                anyOf:
+                - $ref: "#/components/schemas/RetrievedContent"
+                - $ref: "#/components/schemas/PartialMessage"
+                - $ref: "#/components/schemas/Finish"
+      security:
+      - auth: []
+  /api/v1/chat/conversations/chat:
+    post:
+      tags:
+      - 对话管理
+      operationId: newChat_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatParam"
+        required: true
+      responses:
+        "400":
+          description: BAD Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BizError"
+        "200":
+          description: OK
+          content:
+            text/event-stream:
+              schema:
+                anyOf:
+                - $ref: "#/components/schemas/RetrievedContent"
+                - $ref: "#/components/schemas/PartialMessage"
+                - $ref: "#/components/schemas/Finish"
+      security:
+      - auth: []
   /api/v1/blocked_words/search:
     post:
       tags:
       - 屏蔽管理
-      operationId: search_4
+      operationId: search_5
       requestBody:
         content:
           application/json:
@@ -454,7 +625,6 @@ paths:
     post:
       tags:
       - 认证服务
-      - "test[for remove]"
       operationId: register
       requestBody:
         content:
@@ -487,6 +657,62 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ResponseLoginResult"
+  /api/v1/assistants/search:
+    post:
+      tags:
+      - ai助手管理
+      operationId: search_6
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchAssistant"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponsePageVoAssistantVo"
+      security:
+      - auth: []
+  /test/chat:
+    get:
+      tags:
+      - test-controller
+      operationId: chat
+      parameters:
+      - name: query
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+  /test/chat/stream:
+    get:
+      tags:
+      - test-controller
+      operationId: chatStream
+      parameters:
+      - name: query
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            text/event-stream:
+              schema:
+                $ref: "#/components/schemas/SseEmitter"
   /api/v1/blocked_words/all:
     get:
       tags:
@@ -499,6 +725,26 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ResponseListBlockedWordVo"
+      security:
+      - auth: []
+  /api/v1/assistants/{id}/detail:
+    get:
+      tags:
+      - ai助手管理
+      operationId: search_7
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseAssistantDetailVo"
       security:
       - auth: []
   /api/v1/users/{id}:
@@ -606,6 +852,26 @@ paths:
       tags:
       - 屏蔽管理
       operationId: disable
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseEmpty"
+      security:
+      - auth: []
+  /api/v1/assistants/{id}:
+    delete:
+      tags:
+      - ai助手管理
+      operationId: delete_5
       parameters:
       - name: id
         in: path
@@ -803,6 +1069,63 @@ components:
           type: string
         data:
           $ref: "#/components/schemas/BlockedWordVo"
+    AssistantUpdateParam:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        llmModel:
+          type: string
+        systemPrompt:
+          type: string
+        description:
+          type: string
+        baseIds:
+          type: array
+          items:
+            type: string
+        ext:
+          $ref: "#/components/schemas/JsonNode"
+    AssistantVo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        llmModel:
+          type: string
+        systemPrompt:
+          type: string
+        permit:
+          type: integer
+          format: int32
+        description:
+          type: string
+        creator:
+          type: string
+        creatorName:
+          type: string
+        ext:
+          $ref: "#/components/schemas/JsonNode"
+        createTime:
+          type: integer
+          format: int64
+        updateTime:
+          type: integer
+          format: int64
+    ResponseAssistantVo:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/AssistantVo"
     CreateUser:
       type: object
       properties:
@@ -964,6 +1287,27 @@ components:
           type: string
         userId:
           type: string
+    ResponseListUploadResult:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UploadResult"
+    UploadResult:
+      type: object
+      properties:
+        url:
+          type: string
+        id:
+          type: string
+        fileName:
+          type: string
     CreateKnowledgeBase:
       type: object
       properties:
@@ -1103,6 +1447,218 @@ components:
           type: string
         data:
           $ref: "#/components/schemas/PageVoDocumentVo"
+    SearchConversation:
+      type: object
+      properties:
+        key:
+          type: string
+          description: 按名字检索
+        pageNo:
+          type: integer
+          format: int32
+          default: "1"
+          description: 从1开始
+        pageSize:
+          type: integer
+          format: int32
+          default: "20"
+        sort:
+          type: string
+          enum:
+          - CREATED_AT_ASC
+          - CREATED_AT_DESC
+          - UPDATED_AT_ASC
+          - UPDATED_AT_DESC
+    ConversationVo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        creator:
+          type: string
+        creatorName:
+          type: string
+        createTime:
+          type: integer
+          format: int64
+        updateTime:
+          type: integer
+          format: int64
+    PageVoConversationVo:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int64
+        pageSize:
+          type: integer
+          format: int64
+        pageNo:
+          type: integer
+          format: int64
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConversationVo"
+    ResponsePageVoConversationVo:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/PageVoConversationVo"
+    SearchMessage:
+      type: object
+      properties:
+        conversationId:
+          type: string
+        pageNo:
+          type: integer
+          format: int32
+          default: "1"
+          description: 从1开始
+        pageSize:
+          type: integer
+          format: int32
+          default: "20"
+        sort:
+          type: string
+          enum:
+          - CREATED_AT_ASC
+          - CREATED_AT_DESC
+          - UPDATED_AT_ASC
+          - UPDATED_AT_DESC
+    MessageVo:
+      type: object
+      properties:
+        id:
+          type: string
+        conversationId:
+          type: string
+        query:
+          type: string
+        answer:
+          type: string
+        files:
+          $ref: "#/components/schemas/QueryContext"
+        createTime:
+          type: integer
+          format: int64
+        updateTime:
+          type: integer
+          format: int64
+    PageVoMessageVo:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int64
+        pageSize:
+          type: integer
+          format: int64
+        pageNo:
+          type: integer
+          format: int64
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageVo"
+    QueryContext:
+      type: object
+      properties:
+        resources:
+          type: array
+          items:
+            $ref: "#/components/schemas/RetrievalResource"
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/UploadResult"
+    ResponsePageVoMessageVo:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/PageVoMessageVo"
+    RetrievalResource:
+      type: object
+      properties:
+        documentId:
+          type: string
+        fileName:
+          type: string
+        url:
+          type: string
+    AssistantChatParam:
+      type: object
+      properties:
+        conversationId:
+          type: string
+        query:
+          type: string
+        assistantId:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/UploadResult"
+    BizError:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+    RetrievedContent:
+      type: object
+      properties:
+        conversationId:
+          type: string
+        ctx:
+          $ref: "#/components/schemas/QueryContext"
+    PartialMessage:
+      type: object
+      properties:
+        conversationId:
+          type: string
+        text:
+          type: string
+    ChatResponseMetadata:
+      type: object
+    Finish:
+      type: object
+      properties:
+        conversationId:
+          type: string
+        metadata:
+          $ref: "#/components/schemas/ChatResponseMetadata"
+    ChatParam:
+      type: object
+      properties:
+        conversationId:
+          type: string
+        query:
+          type: string
+        llmModel:
+          type: string
+        baseIds:
+          type: array
+          items:
+            type: string
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/UploadResult"
     CreateBlockedWord:
       type: object
       properties:
@@ -1180,6 +1736,82 @@ components:
           type: string
         data:
           $ref: "#/components/schemas/LoginResult"
+    AssistantCreateParam:
+      type: object
+      properties:
+        name:
+          type: string
+        llmModel:
+          type: string
+        systemPrompt:
+          type: string
+        permit:
+          type: integer
+          format: int32
+        description:
+          type: string
+        baseIds:
+          type: array
+          items:
+            type: string
+        creator:
+          type: string
+        ext:
+          $ref: "#/components/schemas/JsonNode"
+    SearchAssistant:
+      type: object
+      properties:
+        key:
+          type: string
+          description: 按名字检索
+        pageNo:
+          type: integer
+          format: int32
+          default: "1"
+          description: 从1开始
+        pageSize:
+          type: integer
+          format: int32
+          default: "20"
+        sort:
+          type: string
+          enum:
+          - CREATED_AT_ASC
+          - CREATED_AT_DESC
+          - UPDATED_AT_ASC
+          - UPDATED_AT_DESC
+    PageVoAssistantVo:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int64
+        pageSize:
+          type: integer
+          format: int64
+        pageNo:
+          type: integer
+          format: int64
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssistantVo"
+    ResponsePageVoAssistantVo:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/PageVoAssistantVo"
+    SseEmitter:
+      type: object
+      properties:
+        timeout:
+          type: integer
+          format: int64
     ResponseListBlockedWordVo:
       type: object
       properties:
@@ -1192,6 +1824,55 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/BlockedWordVo"
+    AssistantDetailVo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        llmModel:
+          type: string
+        systemPrompt:
+          type: string
+        permit:
+          type: integer
+          format: int32
+        description:
+          type: string
+        creator:
+          type: string
+        creatorName:
+          type: string
+        ext:
+          $ref: "#/components/schemas/JsonNode"
+        createTime:
+          type: integer
+          format: int64
+        updateTime:
+          type: integer
+          format: int64
+        bases:
+          type: array
+          items:
+            $ref: "#/components/schemas/BaseInfo"
+    BaseInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    ResponseAssistantDetailVo:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/AssistantDetailVo"
   securitySchemes:
     auth:
       type: apiKey
