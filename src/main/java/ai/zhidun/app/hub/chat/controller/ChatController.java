@@ -23,6 +23,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+
+@ApiResponses(value = {
+    @ApiResponse(
+        responseCode = "400",
+        description = "BAD Request",
+        content = @Content(
+            schema = @Schema(implementation = BizError.class),
+            mediaType = MediaType.APPLICATION_JSON_VALUE
+        )
+    )
+})
 @Tag(name = "对话管理", description = "对话相关接口")
 @SecurityRequirement(name = "auth")
 @RestController
@@ -82,20 +93,8 @@ public class ChatController {
             @ApiResponse(
                     responseCode = "200",
                     content = @Content(
-                            schema = @Schema(anyOf = {
-                                    ChatEvent.RetrievedContent.class,
-                                    ChatEvent.PartialMessage.class,
-                                    ChatEvent.Finish.class
-                            }),
-                            mediaType = MediaType.TEXT_EVENT_STREAM_VALUE
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "BAD Request",
-                    content = @Content(
-                            schema = @Schema(implementation = BizError.class),
-                            mediaType = MediaType.APPLICATION_JSON_VALUE
+                        mediaType = MediaType.TEXT_EVENT_STREAM_VALUE,
+                        schema =@Schema(ref = "_ChatEvent_")
                     )
             )
     })
@@ -104,27 +103,15 @@ public class ChatController {
         return service.chat(param);
     }
 
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    content = @Content(
-                            schema = @Schema(anyOf = {
-                                    ChatEvent.RetrievedContent.class,
-                                    ChatEvent.PartialMessage.class,
-                                    ChatEvent.Finish.class
-                            }),
-                            mediaType = MediaType.TEXT_EVENT_STREAM_VALUE
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "BAD Request",
-                    content = @Content(
-                            schema = @Schema(implementation = BizError.class),
-                            mediaType = MediaType.APPLICATION_JSON_VALUE
-                    )
-            )
-    })
+  @ApiResponses(value = {
+      @ApiResponse(
+          responseCode = "200",
+          content = @Content(
+              mediaType = MediaType.TEXT_EVENT_STREAM_VALUE,
+              schema =@Schema(ref = "_ChatEvent_")
+          )
+      )
+  })
     @PostMapping(value = "/conversations/chat_with_assistant")
     public SseEmitter newChat(@RequestBody AssistantChatParam param) {
         return service.chat(param);

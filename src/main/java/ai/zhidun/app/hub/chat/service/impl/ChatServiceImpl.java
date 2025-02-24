@@ -13,7 +13,9 @@ import ai.zhidun.app.hub.chat.model.ConversationVo;
 import ai.zhidun.app.hub.chat.model.MessageVo;
 import ai.zhidun.app.hub.chat.model.QueryContext;
 import ai.zhidun.app.hub.chat.model.RetrievalResource;
-import ai.zhidun.app.hub.chat.service.ChatEvent;
+import ai.zhidun.app.hub.chat.service.ChatEvent.FinishedEvent;
+import ai.zhidun.app.hub.chat.service.ChatEvent.PartialMessageEvent;
+import ai.zhidun.app.hub.chat.service.ChatEvent.RetrievedContentEvent;
 import ai.zhidun.app.hub.chat.service.ChatService;
 import ai.zhidun.app.hub.common.BizError;
 import ai.zhidun.app.hub.common.BizException;
@@ -70,14 +72,14 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMapper, Conversatio
                     try {
                         QueryContext ctx = into(contents);
                         messageService.newMessage(conversationId, query, ctx);
-                        emitter.send(new ChatEvent.RetrievedContent(conversationId, ctx));
+                        emitter.send(new RetrievedContentEvent(conversationId, ctx));
                     } catch (IOException e) {
                         log.warn("Failed to send contents", e);
                     }
                 })
                 .onPartialResponse(text -> {
                     try {
-                        emitter.send(new ChatEvent.PartialMessage(conversationId,text));
+                        emitter.send(new PartialMessageEvent(conversationId,text));
                     } catch (IOException e) {
                         log.warn("Failed to send partial response", e);
                     }
@@ -85,7 +87,7 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMapper, Conversatio
                 .onCompleteResponse((response) -> {
                     try {
                         messageService.finishMessage(conversationId, response.aiMessage().text());
-                        emitter.send(new ChatEvent.Finish(conversationId, response.metadata()));
+                        emitter.send(new FinishedEvent(conversationId, response.metadata()));
                     } catch (IOException e) {
                         log.warn("Failed to send partial response", e);
                     } finally {
