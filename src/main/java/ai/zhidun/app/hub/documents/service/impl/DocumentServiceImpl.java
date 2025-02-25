@@ -26,6 +26,7 @@ import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapp
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
+import dev.langchain4j.store.embedding.filter.comparison.IsEqualTo;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,7 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -110,7 +110,9 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document> i
     if (this.getById(id) instanceof Document document) {
       // 删除文件
       service.delete(document.getBucket(), document.getKey());
-      // todo clean embedding store
+      storeService
+          .build(document.getBaseId())
+          .removeAll(new IsEqualTo("documentId", document.getId()));
       this.removeById(id);
     }
   }
@@ -127,7 +129,9 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document> i
     this.list(queryWrapper)
         .forEach(document -> {
           service.delete(document.getBucket(), document.getKey());
-          // todo clean embedding store
+          storeService
+              .build(document.getBaseId())
+              .removeAll(new IsEqualTo("documentId", document.getId()));
         });
 
     this.remove(queryWrapper);
