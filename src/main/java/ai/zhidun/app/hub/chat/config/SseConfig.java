@@ -7,6 +7,7 @@ import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import java.util.List;
 import org.springdoc.core.customizers.OpenApiCustomizer;
+import org.springdoc.core.properties.SpringDocConfigProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,10 +15,10 @@ import org.springframework.context.annotation.Configuration;
 public class SseConfig {
 
   @Bean
-  public OpenApiCustomizer customizer() {
+  public OpenApiCustomizer customizer(SpringDocConfigProperties properties) {
     return openApi -> {
       ModelConverters instance = ModelConverters
-          .getInstance();
+          .getInstance(properties.isOpenapi31());
       ResolvedSchema resolvedSchema = instance
           .readAllAsResolvedSchema(ChatEvent.class);
 
