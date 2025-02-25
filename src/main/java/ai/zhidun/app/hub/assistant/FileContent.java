@@ -21,6 +21,10 @@ public record FileContent(UploadResult result, TextSegment segment) implements C
         return new FileContent(result, segment);
     }
 
+    public static Document from(String url) {
+        return UrlDocumentLoader.load(url, DEFAULT_DOCUMENT_PARSER);
+    }
+
     @Override
     public TextSegment textSegment() {
         return segment;

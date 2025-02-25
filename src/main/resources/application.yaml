@@ -15,13 +15,17 @@ spring:
   datasource:
     name: ${spring.application.name}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MYSQL_ADDRESS:localhost:3306}/aihub?useUnicode=true&createDatabaseIfNotExist=true&characterEncoding=utf8&useCursorFetch=true&defaultFetchSize=500&allowMultiQueries=true&rewriteBatchedStatements=true&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${MYSQL_ADDRESS:localhost:3306}/aihub2?useUnicode=true&createDatabaseIfNotExist=true&characterEncoding=utf8&useCursorFetch=true&defaultFetchSize=500&allowMultiQueries=true&rewriteBatchedStatements=true&useSSL=false&allowPublicKeyRetrieval=true
     username: ${MYSQL_USERNAME:root}
     password: ${MYSQL_PASSWORD:123456}
   freemarker:
     cache: true
   flyway:
     baseline-on-migrate: on
+  elasticsearch:
+    uris: ${ELASTIC_URIS:http://localhost:9200}
+    username: ${ELASTIC_USERNAME:elastic}
+    password: ${ELASTIC_PASSWORD:changeme}
 
 server:
   port: ${SERVER_PORT:9876}

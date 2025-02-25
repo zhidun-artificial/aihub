@@ -11,6 +11,7 @@ import ai.zhidun.app.hub.documents.service.DocumentService.SaveResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -46,6 +47,21 @@ public class DocumentController {
     @DeleteMapping("/{id}")
     public Response<Empty> delete(@PathVariable String id) {
         service.delete(id);
+        return Response.ok();
+    }
+
+    public record BatchDeleteDocument(List<String> ids) {
+    }
+
+    @PostMapping("/batch_delete")
+    public Response<Empty> delete(@RequestBody BatchDeleteDocument request) {
+        service.batchDelete(request.ids());
+        return Response.ok();
+    }
+
+    @PostMapping("/retry_ingest")
+    public Response<Empty> retryIngest() {
+        service.retryIngest();
         return Response.ok();
     }
 

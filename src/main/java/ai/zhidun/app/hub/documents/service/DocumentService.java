@@ -12,14 +12,24 @@ import java.util.Collection;
 import java.util.List;
 
 public interface DocumentService {
+    int STATUS_PENDING = 0;
+    int STATUS_INGESTING = 1;
+    int STATUS_FINISHED = 2;
+    int STATUS_ERROR = 3;
 
     void rename(String id, String name);
 
     void delete(String id);
 
+    void batchDelete(List<String> ids);
+
+    void triggerIngest();
+
     IPage<DocumentVo> search(SearchDocument request);
 
     IPage<DocumentVo> searchBlocked(SearchDocument request);
+
+    void retryIngest();
 
     record ReplaceResult(DocumentVo replaced, Unknown unknown) {
 
@@ -38,7 +48,6 @@ public interface DocumentService {
     default SaveResult save(MultipartFile[] files, @RequestParam String libraryId) {
         return save(files, libraryId, JwtSupport.userId());
     }
-
 
     SaveResult save(MultipartFile[] files, @RequestParam String libraryId, String userId);
 

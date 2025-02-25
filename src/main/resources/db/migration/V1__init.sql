@@ -166,6 +166,7 @@ CREATE TABLE `documents`
     `base_id`        char(32)                                                          NULL,
     `creator`        char(32)                                                      NOT NULL,
     `blocked_reason` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL,
+    `status`         int                                                           NOT NULL DEFAULT 0,
     `alive`           bool                                                         NULL DEFAULT TRUE,
     `create_time`    datetime                                                      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time`    datetime                                                      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

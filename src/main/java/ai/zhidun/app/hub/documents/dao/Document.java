@@ -35,6 +35,8 @@ public class Document {
 
     private String creator;
 
+    private Integer status;
+
     private Boolean alive;
 
     // 下面两个字段由mysql/mariadb自动管理
