@@ -1,13 +1,13 @@
 package ai.zhidun.app.hub.auth.controller;
 
-import ai.zhidun.app.hub.auth.model.UserGroupInfo;
+import ai.zhidun.app.hub.auth.model.UserGroupVo;
 import ai.zhidun.app.hub.auth.service.UserGroupService;
+import ai.zhidun.app.hub.auth.service.UserGroupService.CreateUserGroup;
+import ai.zhidun.app.hub.auth.service.UserGroupService.UpdateUserGroup;
 import ai.zhidun.app.hub.common.Response;
 import ai.zhidun.app.hub.common.Response.Empty;
 import ai.zhidun.app.hub.common.Response.PageVo;
 import ai.zhidun.app.hub.common.Sort;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,18 +32,25 @@ public class UserGroupController {
             Integer pageNo,
             @Schema(defaultValue = "20")
             Integer pageSize,
+            boolean withUsers,
+            @Schema(defaultValue = "CREATED_AT_DESC")
             Sort sort) {
 
-        public SearchUserGroups(String key, Integer pageNo, Integer pageSize, Sort sort) {
-            this.key = key;
-            this.pageNo = pageNo != null ? pageNo : 1;
-            this.pageSize = pageSize != null ? pageSize : 20;
-            this.sort = sort != null ? sort : Sort.CREATED_AT_DESC;
+        public Integer pageNo() {
+            return pageNo != null ? pageNo : 1;
+        }
+
+        public Integer pageSize() {
+            return pageSize != null ? pageSize : 20;
+        }
+
+        public Sort sort() {
+            return sort != null ? sort : Sort.CREATED_AT_DESC;
         }
     }
 
     @PostMapping("/search")
-    public Response<PageVo<UserGroupInfo>> search(@RequestBody SearchUserGroups request) {
+    public Response<PageVo<UserGroupVo>> search(@RequestBody SearchUserGroups request) {
         return Response.page(service.search(request));
     }
 
@@ -63,28 +70,16 @@ public class UserGroupController {
         return Response.ok();
     }
 
-    public record CreateUserGroup(String name, String description, JsonNode ext) {
-
-        public CreateUserGroup(String name, String description, JsonNode ext) {
-            this.name = name;
-            this.description = description;
-            this.ext = ext != null ? ext : JsonNodeFactory.instance.objectNode();
-        }
-    }
-
     @PostMapping
-    public Response<UserGroupInfo> create(@RequestBody CreateUserGroup request) {
-        UserGroupInfo info = service.insert(request.name(), request.description(), request.ext());
+    public Response<UserGroupVo> create(@RequestBody CreateUserGroup request) {
+        UserGroupVo info = service.insert(request);
         return Response.ok(info);
     }
 
-    public record UpdateUserGroup(String description, JsonNode ext) {
-
-    }
 
     @PutMapping("/{id}")
-    public Response<UserGroupInfo> update(@PathVariable String id, @RequestBody UpdateUserGroup request) {
-        UserGroupInfo info = service.update(id, request.description(), request.ext());
+    public Response<UserGroupVo> update(@PathVariable String id, @RequestBody UpdateUserGroup request) {
+        UserGroupVo info = service.update(id, request);
         return Response.ok(info);
     }
 

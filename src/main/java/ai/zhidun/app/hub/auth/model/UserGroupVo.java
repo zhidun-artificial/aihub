@@ -2,14 +2,17 @@ package ai.zhidun.app.hub.auth.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public record UserGroupInfo(
+import java.util.List;
+
+public record UserGroupVo(
         String id,
         String name,
-        int userCount,
         String creatorName,
         String description,
         JsonNode ext,
         Long createTime,
-        Long updateTime
+        Long updateTime,
+        int userCount,
+        List<UserVo> users
 ) {
 }

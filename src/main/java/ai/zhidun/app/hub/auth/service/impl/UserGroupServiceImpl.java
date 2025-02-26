@@ -2,7 +2,8 @@ package ai.zhidun.app.hub.auth.service.impl;
 
 import ai.zhidun.app.hub.auth.controller.UserGroupController.SearchUserGroups;
 import ai.zhidun.app.hub.auth.dao.*;
-import ai.zhidun.app.hub.auth.model.UserGroupInfo;
+import ai.zhidun.app.hub.auth.model.UserGroupVo;
+import ai.zhidun.app.hub.auth.model.UserVo;
 import ai.zhidun.app.hub.auth.service.JwtSupport;
 import ai.zhidun.app.hub.auth.service.UserGroupService;
 import ai.zhidun.app.hub.auth.service.UserService;
@@ -15,34 +16,35 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import lombok.SneakyThrows;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static ai.zhidun.app.hub.auth.service.UserService.GROUP_ADMIN;
 
 @Service
-public class UserGroupServiceImpl  extends ServiceImpl<UserGroupMapper, UserGroup>  implements UserGroupService {
+public class UserGroupServiceImpl extends ServiceImpl<UserGroupMapper, UserGroup> implements UserGroupService {
     private final UserGroupMapMapper mapMapper;
 
     private final UserAggMapper aggMapper;
 
     private final UserService userService;
 
-    public UserGroupServiceImpl(UserGroupMapMapper mapMapper, UserAggMapper aggMapper, UserService userService) {
+    private final UserMapper userMapper;
+
+    public UserGroupServiceImpl(UserGroupMapMapper mapMapper, UserAggMapper aggMapper, UserService userService, UserMapper userMapper) {
         this.mapMapper = mapMapper;
         this.aggMapper = aggMapper;
         this.userService = userService;
+        this.userMapper = userMapper;
     }
 
     @Override
-    public IPage<UserGroupInfo> search(SearchUserGroups request) {
+    public IPage<UserGroupVo> search(SearchUserGroups request) {
         PageDTO<UserGroup> page = new PageDTO<>(request.pageNo(), request.pageSize());
 
         LambdaQueryWrapper<UserGroup> query = Wrappers
@@ -55,9 +57,17 @@ public class UserGroupServiceImpl  extends ServiceImpl<UserGroupMapper, UserGrou
 
         IPage<UserGroup> groups = this.page(page, query);
 
+        Map<String, List<UserVo>> userMap = new HashMap<>();
+
         List<String> ids = new ArrayList<>();
         for (UserGroup group : groups.getRecords()) {
             ids.add(group.getId());
+        }
+
+        // add group admin
+        for (UserInfo admin : userMapper.selectAdminByGroupIds(ids)) {
+            userMap.computeIfAbsent(admin.groupId(), k -> new ArrayList<>())
+                    .add(UserVo.from(admin, GROUP_ADMIN));
         }
 
         Map<String, Integer> countMap = new HashMap<>();
@@ -74,53 +84,79 @@ public class UserGroupServiceImpl  extends ServiceImpl<UserGroupMapper, UserGrou
             }
         }
 
-        return groups.convert(vo -> this.from(vo, countMap.getOrDefault(vo.getId(), 0)));
+        if (!ids.isEmpty()) {
+
+            //todo here only superAdmin can see all users
+            for (UserInfo user : userMapper.selectByGroupIds(ids)) {
+                userMap.computeIfAbsent(user.groupId(), k -> new ArrayList<>())
+                        .add(UserVo.from(user));
+            }
+        }
+
+        return groups.convert(vo -> this.from(vo,
+                countMap.getOrDefault(vo.getId(), 0),
+                userMap.getOrDefault(vo.getId(), List.of())));
     }
 
     private static final JsonMapper jsonMapper = new JsonMapper();
 
     @SneakyThrows
-    private UserGroupInfo from(UserGroup vo, int userCount) {
-        return new UserGroupInfo(vo.getId(),
+    private UserGroupVo from(UserGroup vo, int userCount, List<UserVo> users) {
+        return new UserGroupVo(vo.getId(),
                 vo.getName(),
-                userCount,
                 userService.name(vo.getCreator()),
                 vo.getDescription(),
                 jsonMapper.readTree(vo.getExt()),
                 vo.getCreateTime().getTime(),
-                vo.getUpdateTime().getTime()
+                vo.getUpdateTime().getTime(),
+                userCount,
+                users
         );
     }
 
+    @SneakyThrows
+    private UserGroupVo from(UserGroup vo, int userCount) {
+        return from(vo, userCount, Collections.emptyList());
+    }
+
     @Override
-    public UserGroupInfo insert(String name, String description, JsonNode ext) {
+    public UserGroupVo insert(CreateUserGroup request) {
         LambdaQueryWrapper<UserGroup> query = Wrappers
                 .lambdaQuery(UserGroup.class)
-                .eq(UserGroup::getName, name);
+                .eq(UserGroup::getName, request.name());
 
         if (super.exists(query)) {
             throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("同名的组织已经存在!"));
         }
 
         UserGroup entity = new UserGroup();
-        entity.setName(name);
-        entity.setDescription(description);
-        entity.setExt(ext.toString());
+        entity.setName(request.name());
+        entity.setDescription(request.description());
+        entity.setExt(request.ext().toString());
+        entity.setAdminId(request.adminId());
         entity.setCreator(JwtSupport.userId());
         this.save(entity);
+
+        entity = this.getById(entity.getId());
+
         return from(entity, 0);
     }
 
     @Override
-    public UserGroupInfo update(String id, String description, JsonNode ext) {
+    public UserGroupVo update(String id, UpdateUserGroup request) {
         if (this.getById(id) instanceof UserGroup group) {
-            if (description != null) {
-                group.setDescription(description);
+            if (request.name() != null) {
+                group.setName(request.name());
             }
-            if (ext != null) {
-                group.setExt(ext.toString());
+            if (request.description() != null) {
+                group.setDescription(request.description());
             }
-            group.setCreator(JwtSupport.userId());
+            if (request.ext() != null) {
+                group.setExt(request.ext().toString());
+            }
+            if (request.adminId() != null) {
+                group.setAdminId(request.adminId());
+            }
             this.saveOrUpdate(group);
 
             LambdaQueryWrapper<UserGroupMap> wrapper = Wrappers
@@ -128,6 +164,8 @@ public class UserGroupServiceImpl  extends ServiceImpl<UserGroupMapper, UserGrou
                     .eq(UserGroupMap::getGroupId, id);
 
             Long count = mapMapper.selectCount(wrapper);
+
+            group = this.getById(group.getId());
 
             return from(group, Math.toIntExact(count));
         } else {

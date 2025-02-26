@@ -5,7 +5,7 @@ import ai.zhidun.app.hub.auth.dao.User;
 import ai.zhidun.app.hub.auth.dao.UserGroupMap;
 import ai.zhidun.app.hub.auth.dao.UserGroupMapMapper;
 import ai.zhidun.app.hub.auth.dao.UserMapper;
-import ai.zhidun.app.hub.auth.model.UserInfo;
+import ai.zhidun.app.hub.auth.model.UserVo;
 import ai.zhidun.app.hub.auth.service.JwtService;
 import ai.zhidun.app.hub.auth.service.UserService;
 import ai.zhidun.app.hub.common.BizError;
@@ -48,7 +48,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         this.jwt = jwt;
     }
 
-    public IPage<UserInfo> search(SearchUsers request) {
+    public IPage<UserVo> search(SearchUsers request) {
         PageDTO<User> page = new PageDTO<>(request.pageNo(), request.pageSize());
 
         LambdaQueryWrapper<User> query = Wrappers
@@ -76,11 +76,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         return this
                 .page(page, query)
-                .convert(UserInfo::from);
+                .convert(UserVo::from);
     }
 
     @Override
-    public UserInfo register(String username, String password) {
+    public UserVo register(String username, String password) {
         LambdaQueryWrapper<User> query = Wrappers
                 .lambdaQuery(User.class)
                 .eq(User::getName, username);
@@ -92,7 +92,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         entity.setName(username);
         if (super.save(entity)) {
             entity = super.getById(entity.getId());
-            return UserInfo.from(entity);
+            return UserVo.from(entity);
         } else {
             throw new BizException(HttpStatus.INTERNAL_SERVER_ERROR, BizError.error("插入记录失败!"));
         }
@@ -118,7 +118,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             String token = jwt.encode(JwtService.ClaimInfo.common(user.getName(), user.getId()));
             user.setLastLoginTime(Date.from(Instant.now()));
             this.updateById(user);
-            return new LoginResult(UserInfo.from(user), token);
+            return new LoginResult(UserVo.from(user), token);
         } else {
             throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("用户名不存在!"));
         }

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ai.zhidun.app.hub.auth.dao.UserMapper">
+
+    <resultMap id="userInfoMap" type="ai.zhidun.app.hub.auth.dao.UserInfo">
+        <constructor>
+            <idArg column="id" javaType="java.lang.String"/>
+            <idArg column="name" javaType="java.lang.String"/>
+            <idArg column="permit" javaType="int"/>
+            <idArg column="create_time" javaType="java.util.Date"/>
+            <idArg column="update_time" javaType="java.util.Date"/>
+            <idArg column="group_id" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
+    <select id="selectByGroupIds" resultMap="userInfoMap">
+        SELECT u.*,m.group_id as group_id  FROM users u LEFT JOIN user_group_maps m ON u.id = m.user_id
+        WHERE m.group_id IN
+            <foreach item="item" collection="groupIds" open="(" separator="," close=")" nullable="true">
+                #{item}
+            </foreach>
+    </select>
+
+    <select id="selectAdminByGroupIds" resultMap="userInfoMap">
+        SELECT u.*,g.id as group_id  FROM users u LEFT JOIN user_groups g ON u.id = g.admin_id
+        WHERE g.id IN
+        <foreach item="item" collection="groupIds" open="(" separator="," close=")" nullable="true">
+            #{item}
+        </foreach>
+    </select>
+</mapper>

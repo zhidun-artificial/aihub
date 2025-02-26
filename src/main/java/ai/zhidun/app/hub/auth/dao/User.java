@@ -12,6 +12,7 @@ public class User {
     private String id;
     private String name;
     private Boolean alive;
+    private Integer permit;
     @TableField("last_login_time")
     private Date lastLoginTime;
     // 下面两个字段由mysql/mariadb自动管理

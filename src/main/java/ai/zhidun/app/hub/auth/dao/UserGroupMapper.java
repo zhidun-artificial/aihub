@@ -5,5 +5,4 @@ import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
 public interface UserGroupMapper extends BaseMapper<UserGroup> {
-
 }

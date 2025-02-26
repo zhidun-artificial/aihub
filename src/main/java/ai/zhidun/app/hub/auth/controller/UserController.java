@@ -1,6 +1,6 @@
 package ai.zhidun.app.hub.auth.controller;
 
-import ai.zhidun.app.hub.auth.model.UserInfo;
+import ai.zhidun.app.hub.auth.model.UserVo;
 import ai.zhidun.app.hub.auth.service.UserService;
 import ai.zhidun.app.hub.common.Response;
 import ai.zhidun.app.hub.common.Response.Empty;
@@ -54,7 +54,7 @@ public class UserController {
     }
 
     @PostMapping("/search")
-    public Response<PageVo<UserInfo>> search(@RequestBody SearchUsers request) {
+    public Response<PageVo<UserVo>> search(@RequestBody SearchUsers request) {
         return Response.page(service.search(request));
     }
 
@@ -63,8 +63,8 @@ public class UserController {
     }
 
     @PostMapping
-    public Response<UserInfo> create(@RequestBody CreateUser request) {
-        UserInfo info = service.register(request.username(), request.password());
+    public Response<UserVo> create(@RequestBody CreateUser request) {
+        UserVo info = service.register(request.username(), request.password());
         return Response.ok(info);
     }
 

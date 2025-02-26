@@ -1,9 +1,9 @@
 package ai.zhidun.app.hub.auth.controller;
 
-import ai.zhidun.app.hub.auth.model.UserInfo;
-import ai.zhidun.app.hub.common.Response;
+import ai.zhidun.app.hub.auth.model.UserVo;
 import ai.zhidun.app.hub.auth.service.UserService;
 import ai.zhidun.app.hub.auth.service.UserService.LoginResult;
+import ai.zhidun.app.hub.common.Response;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,7 +37,7 @@ public class AuthController {
 
     @Schema(deprecated = true, description = "接口只用于测试")
     @PostMapping("/register")
-    public Response<UserInfo> register(@RequestBody RegisterRequest request) {
+    public Response<UserVo> register(@RequestBody RegisterRequest request) {
         return Response.ok(service.register(request.username, request.password));
     }
 }
