@@ -165,10 +165,21 @@ public class S3Service implements AutoCloseable {
         }
     }
 
-
     public void delete(String bucket, String key) {
         client.deleteObject(b -> b
                 .bucket(bucket)
                 .key(key));
+    }
+
+    public void deleteByTag(String bucket, String key) {
+        client.deleteObject(b -> b
+                .bucket(bucket)
+                .key(key));
+        client.deleteObjectTagging(b -> b
+                .bucket(bucket)
+                .key(key));
+        client.deleteObject(b -> b
+            .bucket(bucket)
+            .key(key));
     }
 }

@@ -63,17 +63,24 @@ jwt:
   refresh-interval: ${JWT_TOKEN_REFRESH_INTERVAL:2h}
   head: ${JWT_TOKEN_HEAD:auth}
 
+model:
+  ollama-llm:
+    base-url: ${OLAMA_CHAT_MODEL_BASE_URL:http://localhost:11434}
+    model-name: ${OLAMA_CHAT_MODEL_NAME:deepseek-r1:1.5}
+    log-requests: off
+    log-responses: off
+    timeout: 1m
 
 langchain4j:
   ollama:
     streaming-chat-model:
       base-url: ${OLAMA_CHAT_MODEL_BASE_URL:http://localhost:11434}
-      model-name: ${OLAMA_CHAT_MODEL_NAME:qwen2.5:14b}
+      model-name: ${OLAMA_CHAT_MODEL_NAME:deepseek-r1:1.5}
       log-requests: off
       log-responses: off
     chat-model:
       base-url: ${OLAMA_CHAT_MODEL_BASE_URL:http://localhost:11434}
-      model-name: ${OLAMA_CHAT_MODEL_NAME:qwen2.5:14b}
+      model-name: ${OLAMA_CHAT_MODEL_NAME:deepseek-r1:1.5}
       log-requests: on
       log-responses: on
 logging:

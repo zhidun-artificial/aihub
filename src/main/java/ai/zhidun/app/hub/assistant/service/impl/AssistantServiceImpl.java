@@ -64,6 +64,9 @@ public class AssistantServiceImpl extends ServiceImpl<AssistantMapper, Assistant
 
     @Override
     public AssistantVo create(AssistantCreateParam param) {
+        if (this.lambdaQuery().eq(Assistant::getName, param.name()).exists()) {
+            throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("助手名称已存在!"));
+        }
 
         Assistant entity = new Assistant();
         entity.setName(param.name());
@@ -79,7 +82,9 @@ public class AssistantServiceImpl extends ServiceImpl<AssistantMapper, Assistant
             saveBaseIds(ids, entity.getId());
         }
 
-        return null;
+        entity = this.getById(entity.getId());
+
+        return from(entity);
     }
 
     private void saveBaseIds(List<String> ids, String id) {

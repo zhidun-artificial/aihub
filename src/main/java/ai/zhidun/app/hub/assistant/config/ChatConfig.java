@@ -4,18 +4,20 @@ import dev.langchain4j.http.client.HttpClientBuilder;
 import dev.langchain4j.ollama.spring.AssistantBuilder;
 import dev.langchain4j.ollama.spring.Properties;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 
 @Configuration
-public class Config {
+@EnableConfigurationProperties(ModelProperties.class)
+public class ChatConfig {
 
     @Bean
-    public AssistantBuilder assistantBuilder(Properties properties,
+    public AssistantBuilder assistantBuilder(ModelProperties properties,
                                              @Qualifier("ollamaStreamingChatModelHttpClientBuilder")
                                              HttpClientBuilder httpClientBuilder) {
-        return new AssistantBuilder(properties, httpClientBuilder);
+        return new AssistantBuilder(properties.getOllamaLlm(), httpClientBuilder);
     }
 
 }

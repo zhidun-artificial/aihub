@@ -16,12 +16,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class VectorStoreService {
 
@@ -63,8 +65,8 @@ public class VectorStoreService {
   public @NonNull ElasticsearchEmbeddingStore create(String id, String modelId) {
     String indexName = indexName(id);
 
-    if (exists(indexName)) {
-      throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("index already exists"));
+    if (isIndexExists(indexName)) {
+      throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("index already isIndexExistsisIndexExists"));
     }
 
     createIndex(id, modelId, indexName);
@@ -90,7 +92,7 @@ public class VectorStoreService {
         .dynamicTemplates(List.of(Map.of("metadata", metadata)))
         .properties("metadata", p -> p
             .object(o -> o
-                .dynamic(DynamicMapping.Runtime)
+                .dynamic(DynamicMapping.True)
             )
         )
         .properties("text", p -> p
@@ -99,6 +101,9 @@ public class VectorStoreService {
         .properties("vector", p -> p
             .denseVector(d -> d
                 .dims(model.dimension())
+                .index(true)
+                //todo make it configurable
+                .similarity("l2_norm")
             )
         )
         .meta(BASE_ID, JsonData.of(baseId))
@@ -124,7 +129,7 @@ public class VectorStoreService {
     }
   }
 
-  public boolean exists(String indexName) {
+  private boolean isIndexExists(String indexName) {
     try {
       return client
           .indices()
@@ -133,18 +138,26 @@ public class VectorStoreService {
           .value();
     } catch (IOException e) {
       throw new BizException(HttpStatus.INTERNAL_SERVER_ERROR,
-          BizError.error("check index exists failed"));
+          BizError.error("check index isIndexExistsisIndexExists failed"));
     }
   }
 
   public void delete(String baseId) {
-    try {
-      client
-          .indices()
-          .delete(b -> b.index(indexName(baseId)));
-    } catch (IOException e) {
-      throw new BizException(HttpStatus.INTERNAL_SERVER_ERROR,
-          BizError.error("delete index failed"));
+    String indexName = indexName(baseId);
+    if (isIndexExists(indexName)) {
+      try {
+        client
+            .indices()
+            .delete(b -> b
+                .index(indexName)
+                .allowNoIndices(true)
+            );
+      } catch (IOException e) {
+        throw new BizException(HttpStatus.INTERNAL_SERVER_ERROR,
+            BizError.error("delete index failed"));
+      }
+    } else {
+      log.warn("index {} not isIndexExistsisIndexExists, skip delete!", indexName);
     }
   }
 
@@ -156,6 +169,21 @@ public class VectorStoreService {
         .restClient(restClient)
         .indexName(indexName(baseId))
         .build();
+  }
+
+  /// 触发es的刷新，建议放在批量操作之后
+  public void refresh() {
+    try {
+      client
+          .indices()
+          .refresh();
+    } catch (IOException e) {
+      log.warn("refresh failed", e);
+    }
+  }
+
+  public boolean exists(String baseId) {
+    return isIndexExists(indexName(baseId));
   }
 
   public record IndexMeta(String baseId, String modelId, int dimension) {

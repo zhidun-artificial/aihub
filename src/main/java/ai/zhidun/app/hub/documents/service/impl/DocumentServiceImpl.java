@@ -18,11 +18,11 @@ import ai.zhidun.app.hub.store.utils.FileParser;
 import ai.zhidun.app.hub.store.utils.FileParser.Failure;
 import ai.zhidun.app.hub.store.utils.FileParser.ParsedResult;
 import ai.zhidun.app.hub.store.utils.FileParser.Success;
+import co.elastic.clients.json.JsonData;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
@@ -110,9 +110,11 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document> i
     if (this.getById(id) instanceof Document document) {
       // 删除文件
       service.delete(document.getBucket(), document.getKey());
-      storeService
-          .build(document.getBaseId())
-          .removeAll(new IsEqualTo("documentId", document.getId()));
+      if (storeService.exists(document.getBaseId())) {
+        storeService
+            .build(document.getBaseId())
+            .removeAll(new IsEqualTo("documentId", JsonData.of(document.getId())));
+      }
       this.removeById(id);
     }
   }
@@ -131,7 +133,7 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document> i
           service.delete(document.getBucket(), document.getKey());
           storeService
               .build(document.getBaseId())
-              .removeAll(new IsEqualTo("documentId", document.getId()));
+              .removeAll(new IsEqualTo("documentId", JsonData.of(document.getId())));
         });
 
     this.remove(queryWrapper);
@@ -162,7 +164,7 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document> i
   private final CopyOnWriteArraySet<String> ingestingIds = new CopyOnWriteArraySet<>();
 
   public void ingest() {
-    LambdaQueryChainWrapper<Document> query = this.lambdaQuery()
+    LambdaQueryWrapper<Document> query = Wrappers.lambdaQuery(Document.class)
         .eq(Document::getStatus, STATUS_PENDING);
 
     List<Document> documents = this.list(query);
@@ -177,7 +179,8 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document> i
       ingestingIds.add(documentId);
       try {
         String url = service.url(document.getBucket(), document.getKey());
-        var doc = FileContent.from(url);
+        String localUrl = service.localUrl(url);
+        var doc = FileContent.from(localUrl);
 
         doc.metadata().put("documentId", documentId);
         doc.metadata().put("fileName", document.getFileName());
@@ -201,6 +204,10 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document> i
         ingestingIds.remove(documentId);
       }
     }
+
+    storeService.refresh();
+
+    log.info("ingest finished");
   }
 
   @Scheduled(fixedDelayString = "${ingest.interval:1m}")
@@ -281,10 +288,21 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document> i
     document.setBucket(bucket);
     document.setTitle(file.fileName());
     document.setFileName(file.fileName());
+    document.setStatus(STATUS_PENDING);
     if (result instanceof Blocked(String reason)) {
       document.setBlockedReason(reason);
     }
     this.saveOrUpdate(document);
+
+    // 删除文件
+    service.delete(document.getBucket(), document.getKey());
+    if (storeService.exists(document.getBaseId())) {
+      storeService
+          .build(document.getBaseId())
+          .removeAll(new IsEqualTo("documentId", JsonData.of(document.getId())));
+    }
+
+    this.triggerIngest();
 
     return from(document);
   }
@@ -310,6 +328,7 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document> i
             .add(new Unknown(failure.fileName(), failure.contentType()));
       }
     }
+    this.triggerIngest();
     return new SaveResult(saved, unknowns);
   }
 

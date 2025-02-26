@@ -41,8 +41,11 @@ public class KnowledgeBaseServiceImpl extends
 
   private final UserService userService;
 
-  public KnowledgeBaseServiceImpl(DocumentAggMapper documentAggMapper, BaseTagMapper tagMapper,
-      VectorStoreService vectorStoreService, UserService userService) {
+  public KnowledgeBaseServiceImpl(
+      DocumentAggMapper documentAggMapper,
+      BaseTagMapper tagMapper,
+      VectorStoreService vectorStoreService,
+      UserService userService) {
     this.documentAggMapper = documentAggMapper;
     this.tagMapper = tagMapper;
     this.vectorStoreService = vectorStoreService;
@@ -50,13 +53,13 @@ public class KnowledgeBaseServiceImpl extends
   }
 
   public KnowledgeBaseVo from(KnowledgeBase entity) {
-    return from(entity, null);
+    return from(entity, null, null);
   }
 
   private final JsonMapper mapper = new JsonMapper();
 
   @SneakyThrows
-  public KnowledgeBaseVo from(KnowledgeBase entity, Integer docCount) {
+  public KnowledgeBaseVo from(KnowledgeBase entity, Integer docCount, List<String> tags) {
     String creatorName = userService.name(entity.getCreator());
     return new KnowledgeBaseVo(
         entity.getId(),
@@ -65,6 +68,7 @@ public class KnowledgeBaseServiceImpl extends
         creatorName,
         docCount,
         mapper.readTree(entity.getExt()),
+        tags,
         entity.getCreateTime().getTime(),
         entity.getUpdateTime().getTime());
   }
@@ -77,6 +81,7 @@ public class KnowledgeBaseServiceImpl extends
     entity.setName(create.name());
     entity.setEmbedModel(create.embedModel());
     entity.setDescription(create.description());
+    entity.setPermit(create.permit());
     entity.setExt(create.ext().toPrettyString());
     entity.setCreator(JwtSupport.userId());
     this.save(entity);
@@ -137,6 +142,10 @@ public class KnowledgeBaseServiceImpl extends
   public void delete(String id) {
     this.removeById(id);
     vectorStoreService.delete(id);
+    tagMapper.delete(Wrappers
+        .lambdaQuery(BaseTag.class)
+        .eq(BaseTag::getBaseId, id)
+    );
     // todo cascade delete documents
   }
 
@@ -175,7 +184,22 @@ public class KnowledgeBaseServiceImpl extends
       }
     }
 
-    return result.convert(base -> this.from(base, countMap.getOrDefault(base.getId(), 0)));
+    Map<String, List<String>> tagMap = new HashMap<>();
+    if (!baseIds.isEmpty()) {
+      for (BaseTag e : tagMapper.selectList(Wrappers
+          .lambdaQuery(BaseTag.class)
+          .in(BaseTag::getBaseId, baseIds))) {
+        tagMap.computeIfAbsent(e.getBaseId(), k -> new ArrayList<>())
+            .add(e.getTag());
+      }
+
+    }
+
+    return result.convert(base -> this
+        .from(base,
+            countMap.getOrDefault(base.getId(), 0),
+            tagMap.getOrDefault(base.getId(), List.of())
+        ));
   }
 
   @Override

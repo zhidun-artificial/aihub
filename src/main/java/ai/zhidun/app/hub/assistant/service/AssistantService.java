@@ -21,7 +21,6 @@ public interface AssistantService {
             Integer permit,
             String description,
             List<String> baseIds,
-            String creator,
             JsonNode ext
     ) {
     }
