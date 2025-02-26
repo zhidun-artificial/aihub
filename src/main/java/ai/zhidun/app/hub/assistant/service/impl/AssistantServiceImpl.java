@@ -25,7 +25,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
-import dev.langchain4j.ollama.spring.AssistantBuilder;
+import ai.zhidun.app.hub.assistant.AssistantBuilder;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;

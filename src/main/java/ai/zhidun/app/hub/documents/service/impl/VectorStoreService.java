@@ -4,7 +4,6 @@ import ai.zhidun.app.hub.common.BizError;
 import ai.zhidun.app.hub.common.BizException;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.mapping.DynamicMapping;
-import co.elastic.clients.elasticsearch._types.mapping.DynamicTemplate;
 import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch.indices.GetMappingResponse;
 import co.elastic.clients.json.JsonData;
@@ -13,7 +12,6 @@ import dev.langchain4j.model.embedding.onnx.bgesmallenv15q.BgeSmallEnV15Quantize
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.elasticsearch.ElasticsearchEmbeddingStore;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
@@ -66,7 +64,8 @@ public class VectorStoreService {
     String indexName = indexName(id);
 
     if (isIndexExists(indexName)) {
-      throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("index already isIndexExistsisIndexExists"));
+      throw new BizException(HttpStatus.BAD_REQUEST,
+          BizError.error("index already isIndexExistsisIndexExists"));
     }
 
     createIndex(id, modelId, indexName);
@@ -78,21 +77,28 @@ public class VectorStoreService {
   }
 
   private void createIndex(String baseId, String modelId, String indexName) {
-    DynamicTemplate metadata = DynamicTemplate.of(d -> d
-        .pathMatch("metadata.*")
-        .mapping(m -> m
-            .keyword(k -> k)
-        )
-    );
+//    DynamicTemplate metadata = DynamicTemplate.of(d -> d
+//        .pathMatch("metadata.*")
+//        .mapping(m -> m
+//            .keyword(k -> k)
+//        )
+//    );
 
     EmbeddingModel model = embeddingModel(modelId);
 
     TypeMapping mapping = TypeMapping.of(m -> m
         .dynamic(DynamicMapping.False)
-        .dynamicTemplates(List.of(Map.of("metadata", metadata)))
         .properties("metadata", p -> p
             .object(o -> o
-                .dynamic(DynamicMapping.True)
+                .properties("fileName", f -> f
+                    .keyword(k -> k)
+                )
+                .properties("url", f -> f
+                    .keyword(k -> k)
+                )
+                .properties("documentId", f -> f
+                    .keyword(k -> k)
+                )
             )
         )
         .properties("text", p -> p

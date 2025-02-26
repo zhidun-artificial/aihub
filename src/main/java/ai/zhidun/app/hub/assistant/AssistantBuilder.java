@@ -1,4 +1,4 @@
-package dev.langchain4j.ollama.spring;
+package ai.zhidun.app.hub.assistant;
 
 import ai.zhidun.app.hub.assistant.config.OllamaLlmProperties;
 import dev.langchain4j.http.client.HttpClientBuilder;
