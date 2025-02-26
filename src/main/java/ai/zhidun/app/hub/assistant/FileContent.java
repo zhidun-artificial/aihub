@@ -13,7 +13,7 @@ import java.util.Map;
 
 public record FileContent(UploadResult result, TextSegment segment) implements Content {
 
-    private static final DocumentParser DEFAULT_DOCUMENT_PARSER = new ApacheTikaDocumentParser(true);
+    private static final DocumentParser DEFAULT_DOCUMENT_PARSER = new ApacheTikaDocumentParser(false);
 
     public static FileContent from(UploadResult result) {
         Document document = UrlDocumentLoader.load(result.url(), DEFAULT_DOCUMENT_PARSER);

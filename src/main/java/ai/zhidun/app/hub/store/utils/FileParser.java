@@ -16,7 +16,7 @@ public class FileParser {
 
     public FileParser() {
         // todo maybe extract some config?
-        parser = new ApacheTikaDocumentParser(true);
+        parser = new ApacheTikaDocumentParser();
     }
 
     public sealed interface ParsedResult permits Success, Failure {
