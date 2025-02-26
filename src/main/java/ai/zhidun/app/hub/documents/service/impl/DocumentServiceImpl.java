@@ -164,8 +164,9 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document> i
   private final CopyOnWriteArraySet<String> ingestingIds = new CopyOnWriteArraySet<>();
 
   public void ingest() {
-    LambdaQueryWrapper<Document> query = Wrappers.lambdaQuery(Document.class)
-        .eq(Document::getStatus, STATUS_PENDING);
+    LambdaQueryWrapper<Document> query = Wrappers
+            .lambdaQuery(Document.class)
+            .eq(Document::getStatus, STATUS_PENDING);
 
     List<Document> documents = this.list(query);
 

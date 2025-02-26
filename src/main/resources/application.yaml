@@ -44,10 +44,10 @@ auth:
   default-password: ${DEFAULT_PASSWORD:goodluck}
 
 s3:
-  access-key-id: ${S3_ACCESS_KEY:MCwX7dMkmCjBUlfHkpSJ}
-  secret-access-key: ${S3_SECRET_KEY:GR0hiRMUWzacM2SdgFDH3T64VM5wCTHTiB0i7vsu}
-  endpoint: ${S3_ENDPOINT:http://192.168.2.56:9000}
-  public-endpoint: ${S3_PUBLIC_ENDPOINT:http://113.108.105.54:56800/store}
+  access-key-id: ${S3_ACCESS_KEY:sHKl9cOI3zB6ZGXDOMRG}
+  secret-access-key: ${S3_SECRET_KEY:M12ZDky1IIFIHRUj06M1LdL22fOQZTBOudpVjVLq}
+  endpoint: ${S3_ENDPOINT:http://192.168.2.50:9000}
+  public-endpoint: ${S3_PUBLIC_ENDPOINT:http://113.108.105.54:56800/store2}
   buckets:
     tmpfile: ${S3_TMPFILE_BUCKET:tmpfile}
     document: ${S3_DOCUMENT_BUCKET:document}
@@ -66,7 +66,7 @@ jwt:
 model:
   ollama-llm:
     base-url: ${OLAMA_CHAT_MODEL_BASE_URL:http://localhost:11434}
-    model-name: ${OLAMA_CHAT_MODEL_NAME:deepseek-r1:1.5}
+    model-name: ${OLAMA_CHAT_MODEL_NAME:deepseek-r1:1.5b}
     log-requests: off
     log-responses: off
     timeout: 1m
@@ -75,12 +75,12 @@ langchain4j:
   ollama:
     streaming-chat-model:
       base-url: ${OLAMA_CHAT_MODEL_BASE_URL:http://localhost:11434}
-      model-name: ${OLAMA_CHAT_MODEL_NAME:deepseek-r1:1.5}
+      model-name: ${OLAMA_CHAT_MODEL_NAME:deepseek-r1:1.5b}
       log-requests: off
       log-responses: off
     chat-model:
       base-url: ${OLAMA_CHAT_MODEL_BASE_URL:http://localhost:11434}
-      model-name: ${OLAMA_CHAT_MODEL_NAME:deepseek-r1:1.5}
+      model-name: ${OLAMA_CHAT_MODEL_NAME:deepseek-r1:1.5b}
       log-requests: on
       log-responses: on
 logging:
