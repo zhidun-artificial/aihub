@@ -18,6 +18,10 @@ spring:
     url: jdbc:mysql://${MYSQL_ADDRESS:localhost:3306}/aihub2?useUnicode=true&createDatabaseIfNotExist=true&characterEncoding=utf8&useCursorFetch=true&defaultFetchSize=500&allowMultiQueries=true&rewriteBatchedStatements=true&useSSL=false&allowPublicKeyRetrieval=true
     username: ${MYSQL_USERNAME:root}
     password: ${MYSQL_PASSWORD:123456}
+    hikari:
+      max-lifetime: 300000
+      keepalive-time: 60000
+      connection-test-query: select 1
   freemarker:
     cache: true
   flyway:

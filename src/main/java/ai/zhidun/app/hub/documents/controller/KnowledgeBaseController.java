@@ -10,7 +10,13 @@ import ai.zhidun.app.hub.documents.service.KnowledgeBaseService.UpdateKnowledgeB
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "知识库管理", description = "知识库相关接口")
 @SecurityRequirement(name = "auth")
@@ -18,49 +24,55 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/knowledge_base")
 public class KnowledgeBaseController {
 
-    private final KnowledgeBaseService service;
+  private final KnowledgeBaseService service;
 
-    public KnowledgeBaseController(KnowledgeBaseService service) {
-        this.service = service;
+  public KnowledgeBaseController(KnowledgeBaseService service) {
+    this.service = service;
+  }
+
+  @PostMapping
+  public Response<KnowledgeBaseVo> create(@RequestBody CreateKnowledgeBase request) {
+    return Response.ok(service.create(request));
+  }
+
+  @PutMapping
+  public Response<KnowledgeBaseVo> update(@RequestBody UpdateKnowledgeBase request) {
+    return Response.ok(service.update(request));
+  }
+
+  @DeleteMapping("/{id}")
+  public Response<Empty> delete(@PathVariable String id) {
+    service.delete(id);
+    return Response.ok();
+  }
+
+  public record SearchKnowledgeBase(
+      @Schema(description = "按名字检索")
+      String key,
+      @Schema(defaultValue = "1", description = "从1开始")
+      Integer pageNo,
+      @Schema(defaultValue = "20")
+      Integer pageSize,
+      @Schema(description = "默认排序创建时间倒序", defaultValue = "CREATED_AT_DESC")
+      Sort sort) {
+
+    public Integer pageNo() {
+      return pageNo != null ? pageNo : 1;
     }
 
-    @PostMapping
-    public Response<KnowledgeBaseVo> create(@RequestBody CreateKnowledgeBase request) {
-        return Response.ok(service.create(request));
+    public Integer pageSize() {
+      return pageSize != null ? pageSize : 20;
     }
 
-    @PutMapping
-    public Response<KnowledgeBaseVo> update(@RequestBody UpdateKnowledgeBase request) {
-        return Response.ok(service.update(request));
+    public Sort sort() {
+      return sort != null ? sort : Sort.CREATED_AT_DESC;
     }
+  }
 
-    @DeleteMapping("/{id}")
-    public Response<Empty> delete(@PathVariable String id) {
-        service.delete(id);
-        return Response.ok();
-    }
-
-    public record SearchKnowledgeBase(
-            @Schema(description = "按名字检索")
-            String key,
-            @Schema(defaultValue = "1", description = "从1开始")
-            Integer pageNo,
-            @Schema(defaultValue = "20")
-            Integer pageSize,
-            Sort sort) {
-
-        public SearchKnowledgeBase(String key, Integer pageNo, Integer pageSize, Sort sort) {
-            this.key = key;
-            this.pageNo = pageNo != null ? pageNo : 1;
-            this.pageSize = pageSize != null ? pageSize : 20;
-            this.sort = sort != null ? sort : Sort.CREATED_AT_DESC;
-        }
-    }
-
-    @PostMapping("/search")
-    public Response<Response.PageVo<KnowledgeBaseVo>> search(@RequestBody SearchKnowledgeBase request) {
-        return Response.page(service.search(request));
-    }
+  @PostMapping("/search")
+  public Response<Response.PageVo<KnowledgeBaseVo>> search(@RequestBody SearchKnowledgeBase request) {
+    return Response.page(service.search(request));
+  }
 
 
 }
