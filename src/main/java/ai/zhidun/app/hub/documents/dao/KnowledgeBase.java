@@ -14,6 +14,9 @@ public class KnowledgeBase {
 
     private Integer permit;
 
+    @TableField("group_id")
+    private String groupId;
+
     private String description;
 
     @TableField("embed_model")

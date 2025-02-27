@@ -1,0 +1,58 @@
+@startuml
+'https://plantuml.com/object-diagram
+
+object SuperAdmin
+
+object UserA {
+    id: 1
+    name: "John Doe"
+}
+
+object UserB {
+    id: 2
+    name: "Wang"
+}
+
+object UserC {
+    id: 2
+    name: "Wang"
+}
+
+object UserGroup1 {
+    id: 1
+    name: "Group A"
+    adminId: 1
+}
+
+object UserGroup2 {
+    id: 2
+    name: "Group B"
+    adminId: 2
+}
+
+object 知识库A
+object 知识库B
+object 知识库C
+object 知识库D公用
+object 知识库F公用
+
+object 助手1
+object 助手2
+
+UserGroup1 <-- UserA
+UserGroup1 <.. UserB
+UserGroup1 <.. UserC
+
+UserGroup2 <-- UserB
+UserGroup2 <.. UserA
+UserGroup2 <.. UserC
+
+UserGroup1 o-- 知识库A
+UserGroup1 o-- 知识库B
+UserGroup1 o-- 知识库C
+
+UserGroup2 o-- 助手1
+UserGroup2 o-- 助手2
+
+
+@enduml

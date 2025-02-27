@@ -19,26 +19,16 @@ public interface KnowledgeBaseService {
             String embedModel,
             String description,
             List<String> tags,
-            @Schema(description = "1-私密 2-团队 3-公开")
+            @Schema(description = "0-公开 1-个人 2-团队")
             Integer permit,
+            @Schema(description = "团队ID，当permit=2时必填")
+            String groupId,
             JsonNode ext
     ) {
 
-        public CreateKnowledgeBase(String name,
-                               String embedModel,
-                               String description,
-                               List<String> tags,
-                               @Schema(description = "1-私密 2-团队 3-公开")
-                               Integer permit,
-                               JsonNode ext) {
-            this.name = name;
-            this.embedModel = embedModel;
-            this.tags = tags;
-            this.permit = permit;
-            this.description = description;
-            this.ext = ext != null ? ext : JsonNodeFactory.instance.objectNode();
+        public JsonNode ext() {
+            return ext != null ? ext : JsonNodeFactory.instance.objectNode();
         }
-
     }
 
     KnowledgeBaseVo create(CreateKnowledgeBase create);

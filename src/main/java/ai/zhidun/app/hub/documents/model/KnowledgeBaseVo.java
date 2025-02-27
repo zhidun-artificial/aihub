@@ -12,5 +12,7 @@ public record KnowledgeBaseVo(
         JsonNode ext,
         List<String> tags,
         long createTime,
-        long updateTime) {
+        long updateTime,
+        Integer permit,
+        String groupId) {
 }

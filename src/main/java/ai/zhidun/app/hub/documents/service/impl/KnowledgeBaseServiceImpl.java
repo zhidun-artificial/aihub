@@ -70,7 +70,9 @@ public class KnowledgeBaseServiceImpl extends
         mapper.readTree(entity.getExt()),
         tags,
         entity.getCreateTime().getTime(),
-        entity.getUpdateTime().getTime());
+        entity.getUpdateTime().getTime(),
+        entity.getPermit(),
+        entity.getGroupId());
   }
 
   @Override
@@ -82,6 +84,7 @@ public class KnowledgeBaseServiceImpl extends
     entity.setEmbedModel(create.embedModel());
     entity.setDescription(create.description());
     entity.setPermit(create.permit());
+    entity.setGroupId(create.groupId());
     entity.setExt(create.ext().toPrettyString());
     entity.setCreator(JwtSupport.userId());
     this.save(entity);

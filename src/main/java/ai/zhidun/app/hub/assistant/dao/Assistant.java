@@ -20,6 +20,9 @@ public class Assistant {
 
     private Integer permit;
 
+    @TableField("group_id")
+    private String groupId;
+
     private String ext;
 
     private String description;

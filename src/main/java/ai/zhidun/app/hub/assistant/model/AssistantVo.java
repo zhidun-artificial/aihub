@@ -8,6 +8,7 @@ public record AssistantVo(
         String llmModel,
         String systemPrompt,
         Integer permit,
+        String groupId,
         String description,
         String creator,
         String creatorName,

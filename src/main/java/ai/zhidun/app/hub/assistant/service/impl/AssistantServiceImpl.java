@@ -75,6 +75,7 @@ public class AssistantServiceImpl extends ServiceImpl<AssistantMapper, Assistant
         entity.setDescription(param.description());
         entity.setCreator(JwtSupport.userId());
         entity.setPermit(param.permit());
+        entity.setGroupId(param.groupId());
         entity.setSystemPrompt(param.systemPrompt());
         this.save(entity);
 
@@ -137,6 +138,7 @@ public class AssistantServiceImpl extends ServiceImpl<AssistantMapper, Assistant
                 entity.getLlmModel(),
                 entity.getSystemPrompt(),
                 entity.getPermit(),
+                entity.getGroupId(),
                 entity.getDescription(),
                 entity.getCreator(),
                 creatorName,
