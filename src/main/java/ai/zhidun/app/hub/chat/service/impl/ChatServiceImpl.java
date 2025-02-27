@@ -29,18 +29,17 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.service.TokenStream;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Slf4j
 @Service
@@ -156,7 +155,10 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMapper, Conversatio
             conversationId = entity.getId();
         }
 
-        AssistantApi api = assistantService.buildApi(param.llmModel(), param.baseIds(), param.files());
+        AssistantApi api = assistantService.buildApi(param.llmModel(),
+            "你是一个很厉害的助手，尽量使用中文回答",
+            param.baseIds(),
+            param.files());
 
         return doChat(api, conversationId, param.query());
     }

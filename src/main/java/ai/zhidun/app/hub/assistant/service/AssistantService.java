@@ -51,5 +51,5 @@ public interface AssistantService {
 
   AssistantApi buildApi(String id, List<UploadResult> files);
 
-  AssistantApi buildApi(String llmModel, List<String> baseIds, List<UploadResult> files);
+  AssistantApi buildApi(String llmModel, String systemPrompt, List<String> baseIds, List<UploadResult> files);
 }

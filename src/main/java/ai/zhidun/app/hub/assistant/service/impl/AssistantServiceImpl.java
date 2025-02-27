@@ -216,7 +216,7 @@ public class AssistantServiceImpl extends ServiceImpl<AssistantMapper, Assistant
                     .map(AssistantBaseMap::getBaseId)
                     .toList();
 
-            return buildApi(assistant.getLlmModel(), baseIds, files);
+            return buildApi(assistant.getLlmModel(), assistant.getSystemPrompt(),baseIds, files);
         } else {
             throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("助手不存在!"));
         }
@@ -224,7 +224,7 @@ public class AssistantServiceImpl extends ServiceImpl<AssistantMapper, Assistant
 
     //never cache
     @Override
-    public AssistantApi buildApi(String llmModel, List<String> baseIds, List<UploadResult> files) {
+    public AssistantApi buildApi(String llmModel, String systemPrompt, List<String> baseIds, List<UploadResult> files) {
         AiServices<AssistantApi> builder = AiServices
                 .builder(AssistantApi.class)
                 .streamingChatLanguageModel(assistantBuilder.streamingModel(llmModel))
@@ -240,6 +240,7 @@ public class AssistantServiceImpl extends ServiceImpl<AssistantMapper, Assistant
                     .toList();
 
             return builder
+                    .systemMessageProvider(memoryId -> systemPrompt)
                     .contentRetriever(new EmbeddingStoresContentRetriever(loadFiles(files), stores))
                     .build();
         } else {

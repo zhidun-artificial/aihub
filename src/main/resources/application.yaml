@@ -71,7 +71,7 @@ model:
   ollama-llm:
     base-url: ${OLAMA_CHAT_MODEL_BASE_URL:http://localhost:11434}
     model-name: ${OLAMA_CHAT_MODEL_NAME:deepseek-r1:1.5b}
-    log-requests: off
+    log-requests: on
     log-responses: off
     timeout: 1m
 
