@@ -38,6 +38,7 @@ import java.util.concurrent.Executors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -71,14 +72,14 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMapper, Conversatio
                     try {
                         QueryContext ctx = into(contents);
                         messageService.newMessage(conversationId, query, ctx);
-                        emitter.send(new RetrievedContentEvent(conversationId, ctx));
+                        emitter.send(new RetrievedContentEvent(conversationId, ctx), MediaType.APPLICATION_JSON);
                     } catch (IOException e) {
                         log.warn("Failed to send contents", e);
                     }
                 })
                 .onPartialResponse(text -> {
                     try {
-                        emitter.send(new PartialMessageEvent(conversationId,text));
+                        emitter.send(new PartialMessageEvent(conversationId,text), MediaType.APPLICATION_JSON);
                     } catch (IOException e) {
                         log.warn("Failed to send partial response", e);
                     }
@@ -86,7 +87,7 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMapper, Conversatio
                 .onCompleteResponse((response) -> {
                     try {
                         messageService.finishMessage(conversationId, response.aiMessage().text());
-                        emitter.send(new FinishedEvent(conversationId, response.metadata()));
+                        emitter.send(new FinishedEvent(conversationId, response.metadata().toString()), MediaType.APPLICATION_JSON);
                     } catch (IOException e) {
                         log.warn("Failed to send partial response", e);
                     } finally {

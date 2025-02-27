@@ -6,7 +6,6 @@ import ai.zhidun.app.hub.chat.service.ChatEvent.PartialMessageEvent;
 import ai.zhidun.app.hub.chat.service.ChatEvent.RetrievedContentEvent;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import dev.langchain4j.model.chat.response.ChatResponseMetadata;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(discriminatorProperty = "event")
@@ -29,7 +28,7 @@ public sealed interface ChatEvent {
     }
 
     @Schema(name = "FinishedEvent")
-    record FinishedEvent(String conversationId, ChatResponseMetadata metadata) implements ChatEvent {
+    record FinishedEvent(String conversationId, String metadata) implements ChatEvent {
 
     }
 }
