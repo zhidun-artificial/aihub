@@ -69,22 +69,21 @@ jwt:
 
 model:
   ollama-llm:
-    base-url: ${OLAMA_CHAT_MODEL_BASE_URL:http://localhost:11434}
-    model-name: ${OLAMA_CHAT_MODEL_NAME:deepseek-r1:1.5b}
+    base-url: ${OLLAMA_CHAT_MODEL_BASE_URL:http://localhost:11434}
+    model-name: ${OLLAMA_CHAT_MODEL_NAME:deepseek-r1:1.5b}
     log-requests: on
     log-responses: off
-    timeout: 1m
 
 langchain4j:
   ollama:
     streaming-chat-model:
-      base-url: ${OLAMA_CHAT_MODEL_BASE_URL:http://localhost:11434}
-      model-name: ${OLAMA_CHAT_MODEL_NAME:deepseek-r1:1.5b}
+      base-url: ${OLLAMA_CHAT_MODEL_BASE_URL:http://localhost:11434}
+      model-name: ${OLLAMA_CHAT_MODEL_NAME:deepseek-r1:1.5b}
       log-requests: off
       log-responses: off
     chat-model:
-      base-url: ${OLAMA_CHAT_MODEL_BASE_URL:http://localhost:11434}
-      model-name: ${OLAMA_CHAT_MODEL_NAME:deepseek-r1:1.5b}
+      base-url: ${OLLAMA_CHAT_MODEL_BASE_URL:http://localhost:11434}
+      model-name: ${OLLAMA_CHAT_MODEL_NAME:deepseek-r1:1.5b}
       log-requests: on
       log-responses: on
 logging:

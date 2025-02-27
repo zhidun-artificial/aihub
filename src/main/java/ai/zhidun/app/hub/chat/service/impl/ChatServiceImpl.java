@@ -90,6 +90,7 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMapper, Conversatio
                     } catch (IOException e) {
                         log.warn("Failed to send partial response", e);
                     } finally {
+                        log.info("Chat completed");
                         emitter.complete();
                     }
                 })

@@ -29,6 +29,7 @@ import ai.zhidun.app.hub.assistant.AssistantBuilder;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;
+import dev.langchain4j.store.memory.chat.InMemoryChatMemoryStore;
 import lombok.SneakyThrows;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
@@ -222,16 +223,23 @@ public class AssistantServiceImpl extends ServiceImpl<AssistantMapper, Assistant
         }
     }
 
+    // todo make the memory persistent
+    // https://github.com/langchain4j/langchain4j-examples/blob/main/other-examples/src/main/java/ServiceWithPersistentMemoryForEachUserExample.java#L59
+    private final InMemoryChatMemoryStore chatMemoryStore = new InMemoryChatMemoryStore();
+
     //never cache
     @Override
     public AssistantApi buildApi(String llmModel, String systemPrompt, List<String> baseIds, List<UploadResult> files) {
         AiServices<AssistantApi> builder = AiServices
                 .builder(AssistantApi.class)
                 .streamingChatLanguageModel(assistantBuilder.streamingModel(llmModel))
-                // todo make the memory persistent
-                // https://github.com/langchain4j/langchain4j-examples/blob/main/other-examples/src/main/java/ServiceWithPersistentMemoryForEachUserExample.java#L59
                 // here memory is conversation id
-                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(3));
+                .chatMemoryProvider(memoryId -> MessageWindowChatMemory
+                    .builder()
+                    //todo make it configurable
+                    .maxMessages(10)
+                    .chatMemoryStore(chatMemoryStore)
+                    .build());
 
         if (baseIds instanceof List<String> ids && !ids.isEmpty()) {
             List<EmbeddingStoreContentRetriever> stores = ids.stream()
