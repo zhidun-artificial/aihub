@@ -1,19 +1,24 @@
 package ai.zhidun.app.hub.auth.config;
 
-import ai.zhidun.app.hub.auth.filter.JwtAuthenticationFilter;
-import jakarta.servlet.http.HttpServletRequest;
+import ai.zhidun.app.hub.auth.service.CasUserDetailsService;
+import org.apereo.cas.client.session.SingleSignOutFilter;
+import org.apereo.cas.client.validation.Cas30ServiceTicketValidator;
+import org.apereo.cas.client.validation.TicketValidator;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authorization.AuthorizationManager;
-import org.springframework.security.config.ObjectPostProcessor;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.cas.ServiceProperties;
+import org.springframework.security.cas.authentication.CasAuthenticationProvider;
+import org.springframework.security.cas.web.CasAuthenticationEntryPoint;
+import org.springframework.security.cas.web.CasAuthenticationFilter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.intercept.AuthorizationFilter;
-import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
+import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
+import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 @Configuration
 @EnableWebSecurity
@@ -21,23 +26,12 @@ import org.springframework.security.web.authentication.AnonymousAuthenticationFi
 public class WebSecurityConfig {
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter();
+    MvcRequestMatcher.Builder mvcRequestMatcherBuilder(HandlerMappingIntrospector introspector) {
+        return new MvcRequestMatcher.Builder(introspector);
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        JwtAuthenticationFilter jwtAuthenticationFilter = jwtAuthenticationFilter();
-        var objectPostProcessor = new ObjectPostProcessor<>() {
-            @Override
-            public <O> O postProcess(O object) {
-                if (object instanceof AuthorizationFilter filter) {
-                    AuthorizationManager<HttpServletRequest> authorizationManager = filter.getAuthorizationManager();
-                    jwtAuthenticationFilter.setManager(authorizationManager);
-                }
-                return object;
-            }
-        };
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, HandlerMappingIntrospector introspector, CasUserDetailsService detailsService) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((requests) -> requests
@@ -55,27 +49,54 @@ public class WebSecurityConfig {
                         .authenticated()
                         .anyRequest()
                         .anonymous()
-                        .withObjectPostProcessor(objectPostProcessor)
                 )
-                .exceptionHandling(c -> c
-                        .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            response.setStatus(403);
-                            response.setContentType("application/json");
-                            response.setCharacterEncoding("utf-8");
-                            response.getWriter().write("{\"code\":403,\"msg\":\"" + accessDeniedException.getMessage() + "\"}");
-                        })
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(401);
-                            response.setContentType("application/json");
-                            response.setCharacterEncoding("utf-8");
-                            response.getWriter().write("{\"code\":401,\"msg\":\"" + authException.getMessage() + "\"}");
-                        })
-                )
-                .sessionManagement(c -> c
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .addFilterAfter(jwtAuthenticationFilter, AnonymousAuthenticationFilter.class)
+                .exceptionHandling((exceptions) -> exceptions.authenticationEntryPoint(casAuthenticationEntryPoint()))
+                .addFilter(casAuthenticationFilter(detailsService))
+                .addFilterBefore(new SingleSignOutFilter(), CasAuthenticationFilter.class)
                 .build();
 
+    }
+
+    public CasAuthenticationFilter casAuthenticationFilter(CasUserDetailsService detailsService) {
+        CasAuthenticationFilter filter = new CasAuthenticationFilter();
+        CasAuthenticationProvider casAuthenticationProvider = casAuthenticationProvider(detailsService);
+        filter.setAuthenticationManager(new ProviderManager(casAuthenticationProvider));
+        return filter;
+    }
+
+    public CasAuthenticationProvider casAuthenticationProvider(CasUserDetailsService userDetailsService) {
+        CasAuthenticationProvider provider = new CasAuthenticationProvider();
+        provider.setAuthenticationUserDetailsService(userDetailsService);
+        provider.setServiceProperties(serviceProperties());
+        provider.setTicketValidator(cas30ServiceTicketValidator());
+        provider.setKey("key");
+        return provider;
+    }
+
+
+    @Value("${cas.base.url}")
+    private String casBaseUrl;
+
+    @Value("${cas.login.url}")
+    private String casLoginUrl;
+
+    private TicketValidator cas30ServiceTicketValidator() {
+        return new Cas30ServiceTicketValidator(this.casBaseUrl);
+    }
+
+    @Value("${server.port}")
+    private Integer serverPort;
+
+    public CasAuthenticationEntryPoint casAuthenticationEntryPoint() {
+        CasAuthenticationEntryPoint casAuthenticationEntryPoint = new CasAuthenticationEntryPoint();
+        casAuthenticationEntryPoint.setLoginUrl(this.casLoginUrl);
+        casAuthenticationEntryPoint.setServiceProperties(serviceProperties());
+        return casAuthenticationEntryPoint;
+    }
+
+    public ServiceProperties serviceProperties() {
+        ServiceProperties serviceProperties = new ServiceProperties();
+        serviceProperties.setService("http://localhost:" + serverPort + "/login/cas");
+        return serviceProperties;
     }
 }

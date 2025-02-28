@@ -29,6 +29,7 @@ import java.nio.file.StandardOpenOption;
 import java.security.spec.InvalidKeySpecException;
 import java.time.Duration;
 
+@Deprecated
 @Service
 public class JwtService {
 

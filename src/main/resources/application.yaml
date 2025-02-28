@@ -15,7 +15,7 @@ spring:
   datasource:
     name: ${spring.application.name}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MYSQL_ADDRESS:localhost:3306}/aihub2?useUnicode=true&createDatabaseIfNotExist=true&characterEncoding=utf8&useCursorFetch=true&defaultFetchSize=500&allowMultiQueries=true&rewriteBatchedStatements=true&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${MYSQL_ADDRESS:localhost:3306}/aihub?useUnicode=true&createDatabaseIfNotExist=true&characterEncoding=utf8&useCursorFetch=true&defaultFetchSize=500&allowMultiQueries=true&rewriteBatchedStatements=true&useSSL=false&allowPublicKeyRetrieval=true
     username: ${MYSQL_USERNAME:root}
     password: ${MYSQL_PASSWORD:123456}
     hikari:
@@ -89,3 +89,9 @@ langchain4j:
 logging:
   level:
     dev.langchain4j.http.client.log: debug
+
+cas:
+  login:
+    url: ${cas.base.url}/login
+  base:
+    url: ${CAS_BASE_URL:http://localhost:8090/cas}

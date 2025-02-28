@@ -1,24 +1,23 @@
 package ai.zhidun.app.hub.auth.service;
 
 import lombok.experimental.UtilityClass;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.cas.authentication.CasAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
 
-@Deprecated
 @UtilityClass
-public class JwtSupport {
+public class AuthSupport {
 
-    public static Optional<JwtService.AuthedClaimInfo> claimInfo() {
+    public static Optional<YsUserDetail> userDetail() {
         SecurityContext context = SecurityContextHolder.getContext();
         Authentication authentication = context.getAuthentication();
-        if (authentication instanceof UsernamePasswordAuthenticationToken token) {
+        if (authentication instanceof CasAuthenticationToken token) {
             Object principal = token.getPrincipal();
-            if (principal instanceof JwtService.AuthedClaimInfo info) {
-                return Optional.of(info);
+            if (principal instanceof YsUserDetail detail) {
+                return Optional.of(detail);
             } else {
                 return Optional.empty();
             }
@@ -28,6 +27,6 @@ public class JwtSupport {
     }
 
     public static String userId() {
-        return claimInfo().orElseThrow().userId();
+        return userDetail().orElseThrow().userId();
     }
 }
