@@ -49,20 +49,29 @@ public class MessageService extends ServiceImpl<MessageMapper, Message> {
     }
 
     @SneakyThrows
-    public Message newMessage(String conversationId, String query, QueryContext ctx) {
+    public Message newMessage(String conversationId, String query) {
         Message message = new Message();
         message.setConversationId(conversationId);
         message.setQuery(query);
         message.setAnswer("");
-        message.setContext(mapper.writeValueAsString(ctx));
+        message.setContext("{}");
         this.save(message);
         return message;
     }
 
     @SneakyThrows
-    public void finishMessage(String conversationId, String answer) {
-        this.update(Wrappers.lambdaUpdate(Message.class)
-                .eq(Message::getConversationId, conversationId)
-                .set(Message::getAnswer, answer));
+    public void updateContext(String messageId, QueryContext ctx) {
+        this.lambdaUpdate()
+            .eq(Message::getId, messageId)
+            .set(Message::getContext, mapper.writeValueAsString(ctx))
+            .update();
+    }
+
+    @SneakyThrows
+    public void finishMessage(String messageId, String answer) {
+        this.lambdaUpdate()
+            .eq(Message::getId, messageId)
+            .set(Message::getAnswer, answer)
+            .update();
     }
 }

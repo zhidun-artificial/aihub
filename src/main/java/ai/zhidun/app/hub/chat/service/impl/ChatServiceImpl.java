@@ -9,6 +9,7 @@ import ai.zhidun.app.hub.chat.controller.ChatController.SearchConversation;
 import ai.zhidun.app.hub.chat.controller.ChatController.SearchMessage;
 import ai.zhidun.app.hub.chat.dao.Conversation;
 import ai.zhidun.app.hub.chat.dao.ConversationMapper;
+import ai.zhidun.app.hub.chat.dao.Message;
 import ai.zhidun.app.hub.chat.model.ConversationVo;
 import ai.zhidun.app.hub.chat.model.MessageVo;
 import ai.zhidun.app.hub.chat.model.QueryContext;
@@ -66,28 +67,30 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMapper, Conversatio
 
     private SseEmitter doChat(AssistantApi api, String conversationId, String query) {
         SseEmitter emitter = new SseEmitter();
+        Message message = messageService.newMessage(conversationId, query);
+        String messageId = message.getId();
 
         TokenStream stream = api.chat(conversationId, query)
                 .onRetrieved(contents -> {
                     try {
                         QueryContext ctx = into(contents);
-                        messageService.newMessage(conversationId, query, ctx);
-                        emitter.send(new RetrievedContentEvent(conversationId, ctx), MediaType.APPLICATION_JSON);
+                        messageService.updateContext(messageId, ctx);
+                        emitter.send(new RetrievedContentEvent(messageId, conversationId, ctx), MediaType.APPLICATION_JSON);
                     } catch (IOException e) {
                         log.warn("Failed to send contents", e);
                     }
                 })
                 .onPartialResponse(text -> {
                     try {
-                        emitter.send(new PartialMessageEvent(conversationId,text), MediaType.APPLICATION_JSON);
+                        emitter.send(new PartialMessageEvent(messageId,conversationId,text), MediaType.APPLICATION_JSON);
                     } catch (IOException e) {
                         log.warn("Failed to send partial response", e);
                     }
                 })
                 .onCompleteResponse((response) -> {
                     try {
-                        messageService.finishMessage(conversationId, response.aiMessage().text());
-                        emitter.send(new FinishedEvent(conversationId, response.metadata().toString()), MediaType.APPLICATION_JSON);
+                        messageService.finishMessage(messageId, response.aiMessage().text());
+                        emitter.send(new FinishedEvent(messageId, conversationId, response.metadata().toString()), MediaType.APPLICATION_JSON);
                     } catch (IOException e) {
                         log.warn("Failed to send partial response", e);
                     } finally {

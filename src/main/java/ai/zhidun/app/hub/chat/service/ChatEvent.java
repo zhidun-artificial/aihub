@@ -18,17 +18,17 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public sealed interface ChatEvent {
 
     @Schema(name = "RetrievedContentEvent")
-    record RetrievedContentEvent(String conversationId, QueryContext ctx) implements ChatEvent {
+    record RetrievedContentEvent(String messageId, String conversationId, QueryContext ctx) implements ChatEvent {
 
     }
 
     @Schema(name = "PartialMessageEvent")
-    record PartialMessageEvent(String conversationId, String text) implements ChatEvent {
+    record PartialMessageEvent(String messageId, String conversationId, String text) implements ChatEvent {
 
     }
 
     @Schema(name = "FinishedEvent")
-    record FinishedEvent(String conversationId, String metadata) implements ChatEvent {
+    record FinishedEvent(String messageId, String conversationId, String metadata) implements ChatEvent {
 
     }
 }
