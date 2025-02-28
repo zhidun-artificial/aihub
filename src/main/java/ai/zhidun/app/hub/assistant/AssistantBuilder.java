@@ -17,10 +17,12 @@ public class AssistantBuilder {
 
     public StreamingChatLanguageModel streamingModel(String llmModel) {
 
+        String modelName = llmModel != null ? llmModel : properties.getModelName();
+
         return OllamaStreamingChatModel.builder()
                 .httpClientBuilder(httpClientBuilder)
                 .baseUrl(properties.getBaseUrl())
-                .modelName(llmModel)
+                .modelName(modelName)
                 .temperature(properties.getTemperature())
                 .topK(properties.getTopK())
                 .topP(properties.getTopP())
