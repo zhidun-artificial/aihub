@@ -3,12 +3,7 @@ package ai.zhidun.app.hub.documents.service.impl;
 import ai.zhidun.app.hub.auth.service.AuthSupport;
 import ai.zhidun.app.hub.auth.service.UserService;
 import ai.zhidun.app.hub.documents.controller.KnowledgeBaseController;
-import ai.zhidun.app.hub.documents.dao.BaseTag;
-import ai.zhidun.app.hub.documents.dao.BaseTagMapper;
-import ai.zhidun.app.hub.documents.dao.DocumentAgg;
-import ai.zhidun.app.hub.documents.dao.DocumentAggMapper;
-import ai.zhidun.app.hub.documents.dao.KnowledgeBase;
-import ai.zhidun.app.hub.documents.dao.KnowledgeBaseMapper;
+import ai.zhidun.app.hub.documents.dao.*;
 import ai.zhidun.app.hub.documents.model.KnowledgeBaseVo;
 import ai.zhidun.app.hub.documents.service.KnowledgeBaseService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -20,14 +15,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.store.embedding.EmbeddingStore;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
 
 @Service
 public class KnowledgeBaseServiceImpl extends
@@ -73,6 +65,17 @@ public class KnowledgeBaseServiceImpl extends
         entity.getUpdateTime().getTime(),
         entity.getPermit(),
         entity.getGroupId());
+  }
+
+  @Override
+  public List<String> tags() {
+    return tagMapper.selectList(Wrappers
+        .lambdaQuery(BaseTag.class)
+        .groupBy(BaseTag::getTag)
+        .select(BaseTag::getTag))
+            .stream()
+            .map(BaseTag::getTag)
+            .toList();
   }
 
   @Override

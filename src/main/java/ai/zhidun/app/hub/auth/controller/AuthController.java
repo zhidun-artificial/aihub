@@ -1,37 +1,31 @@
 package ai.zhidun.app.hub.auth.controller;
 
-import ai.zhidun.app.hub.auth.service.AuthSupport;
+import ai.zhidun.app.hub.auth.service.TokenService;
+import ai.zhidun.app.hub.auth.service.TokenService.TokenResult;
 import ai.zhidun.app.hub.common.Response;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "认证服务", description = "用户认证相关接口")
-@Controller
+@RestController
+@RequestMapping("/api/auth")
 public class AuthController {
+    private final TokenService tokenService;
 
-    @ResponseBody
-    @Schema(deprecated = true, description = "接口只用于测试")
-    @GetMapping("/api/v1/auth/show_me")
-    public Response<String> register() {
-        return Response.ok(AuthSupport.userDetail().toString());
+    public AuthController(TokenService tokenService) {
+        this.tokenService = tokenService;
     }
 
-    @Value("${cas.success.forward-url}")
-    private String targetUrl;
-
-    @GetMapping("/api/v1/auth/login")
-    public String login() {
-        return "redirect:" + targetUrl;
+    @GetMapping("/login_url")
+    public Response<String> loginUrl() {
+        return Response.ok(tokenService.loginUrl());
     }
 
-    @ResponseBody
-    @Schema(deprecated = true, description = "接口只用于测试")
-    @GetMapping("/index")
-    public String index() {
-        return "hello world";
+    @GetMapping("/token")
+    public Response<TokenResult> token(@RequestParam String ticket, @RequestParam(required = false) String service) {
+        return Response.ok(tokenService.token(ticket, service));
     }
 }

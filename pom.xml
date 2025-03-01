@@ -71,6 +71,10 @@
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.bitbucket.b_c</groupId>
+			<artifactId>jose4j</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>
 		</dependency>

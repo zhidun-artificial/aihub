@@ -55,6 +55,16 @@ s3:
     document: ${S3_DOCUMENT_BUCKET:document}
     blocked: ${S3_BLOCKED_BUCKET:blocked}
 
+jwt:
+  jwt-key: ${JWT_PRIVATE_KEY:/opt/keys/jwt_key}
+  key-id: ${JWT_KEY_ID:good_luck}
+  issuer: ${JWT_ISSUER:happy}
+  audience: ${JWT_AUDIENCE:happy}
+  expiration: ${JWT_TOKEN_EXPIRATION:24h}
+  # 临近超时时间10分钟内，会返回新的token
+  refresh-interval: ${JWT_TOKEN_REFRESH_INTERVAL:2h}
+  head: ${JWT_TOKEN_HEAD:auth}
+
 model:
   ollama-llm:
     base-url: ${OLLAMA_CHAT_MODEL_BASE_URL:http://localhost:11434}
@@ -79,9 +89,9 @@ logging:
     dev.langchain4j.http.client.log: debug
 
 cas:
-  success:
-    forward-url: ${CAS_SUCCESS_FORWARD_URL:/index}
   login:
     url: ${cas.base.url}/login
   base:
-    url: ${CAS_BASE_URL:http://localhost:8090/cas}
+    url: ${CAS_BASE_URL:http://113.108.105.54:56800/cas}
+  validate:
+    url: ${CAS_VALIDATE_URL:http://113.108.105.54:56800/cas}

@@ -10,13 +10,9 @@ import ai.zhidun.app.hub.documents.service.KnowledgeBaseService.UpdateKnowledgeB
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "知识库管理", description = "知识库相关接口")
 @SecurityRequirement(name = "auth")
@@ -33,6 +29,11 @@ public class KnowledgeBaseController {
   @PostMapping
   public Response<KnowledgeBaseVo> create(@RequestBody CreateKnowledgeBase request) {
     return Response.ok(service.create(request));
+  }
+
+  @GetMapping("/tags")
+  public Response<List<String>> tags() {
+    return Response.ok(service.tags());
   }
 
   @PutMapping
@@ -54,7 +55,9 @@ public class KnowledgeBaseController {
       @Schema(defaultValue = "20")
       Integer pageSize,
       @Schema(description = "默认排序创建时间倒序", defaultValue = "CREATED_AT_DESC")
-      Sort sort) {
+      Sort sort,
+      @Schema(description = "查询可编辑的知识库", defaultValue = "false")
+      boolean forEdit) {
 
     public Integer pageNo() {
       return pageNo != null ? pageNo : 1;

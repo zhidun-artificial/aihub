@@ -7,7 +7,12 @@ import java.util.Collection;
 import java.util.List;
 
 
-public record YsUserDetail(String userName, String userId, int permit) implements UserDetails {
+public record YsUserDetail(
+        String userName,
+        String userId,
+        int permit,
+        String st
+) implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();

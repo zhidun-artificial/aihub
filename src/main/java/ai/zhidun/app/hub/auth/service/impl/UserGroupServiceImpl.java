@@ -6,6 +6,7 @@ import ai.zhidun.app.hub.auth.model.UserGroupVo;
 import ai.zhidun.app.hub.auth.model.UserVo;
 import ai.zhidun.app.hub.auth.service.AuthSupport;
 import ai.zhidun.app.hub.auth.service.UserGroupService;
+import ai.zhidun.app.hub.auth.dao.UserMapper;
 import ai.zhidun.app.hub.auth.service.UserService;
 import ai.zhidun.app.hub.common.BizError;
 import ai.zhidun.app.hub.common.BizException;

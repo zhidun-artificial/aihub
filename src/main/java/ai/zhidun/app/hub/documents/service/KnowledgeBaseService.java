@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface KnowledgeBaseService {
+    List<String> tags();
 
     record CreateKnowledgeBase(
             String name,
