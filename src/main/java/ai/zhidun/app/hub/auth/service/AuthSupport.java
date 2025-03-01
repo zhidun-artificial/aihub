@@ -1,5 +1,6 @@
 package ai.zhidun.app.hub.auth.service;
 
+import ai.zhidun.app.hub.common.PermitConst;
 import lombok.experimental.UtilityClass;
 import org.springframework.security.cas.authentication.CasAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -14,8 +15,8 @@ public class AuthSupport {
     public static Optional<YsUserDetail> userDetail() {
         SecurityContext context = SecurityContextHolder.getContext();
         Authentication authentication = context.getAuthentication();
-        if (authentication instanceof CasAuthenticationToken token) {
-            Object principal = token.getPrincipal();
+        if (authentication instanceof CasAuthToken token) {
+            Object principal = token.getDetails();
             if (principal instanceof YsUserDetail detail) {
                 return Optional.of(detail);
             } else {
@@ -28,5 +29,9 @@ public class AuthSupport {
 
     public static String userId() {
         return userDetail().orElseThrow().userId();
+    }
+
+    public static boolean superAdmin() {
+        return userDetail().orElseThrow().permit() == PermitConst.SUPER_ADMIN;
     }
 }

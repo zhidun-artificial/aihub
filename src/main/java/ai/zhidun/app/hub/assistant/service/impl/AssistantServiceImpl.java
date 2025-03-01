@@ -1,6 +1,7 @@
 package ai.zhidun.app.hub.assistant.service.impl;
 
 import ai.zhidun.app.hub.assistant.AssistantApi;
+import ai.zhidun.app.hub.assistant.AssistantBuilder;
 import ai.zhidun.app.hub.assistant.FileContent;
 import ai.zhidun.app.hub.assistant.controller.AssistantController;
 import ai.zhidun.app.hub.assistant.dao.Assistant;
@@ -11,9 +12,11 @@ import ai.zhidun.app.hub.assistant.model.AssistantDetailVo;
 import ai.zhidun.app.hub.assistant.model.AssistantVo;
 import ai.zhidun.app.hub.assistant.service.AssistantService;
 import ai.zhidun.app.hub.auth.service.AuthSupport;
+import ai.zhidun.app.hub.auth.service.UserGroupService;
 import ai.zhidun.app.hub.auth.service.UserService;
 import ai.zhidun.app.hub.common.BizError;
 import ai.zhidun.app.hub.common.BizException;
+import ai.zhidun.app.hub.common.PermitConst;
 import ai.zhidun.app.hub.documents.langchain4j.EmbeddingStoresContentRetriever;
 import ai.zhidun.app.hub.documents.service.KnowledgeBaseService;
 import ai.zhidun.app.hub.tmpfile.service.UploadResult;
@@ -25,7 +28,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
-import ai.zhidun.app.hub.assistant.AssistantBuilder;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;
@@ -51,16 +53,20 @@ public class AssistantServiceImpl extends ServiceImpl<AssistantMapper, Assistant
 
     private final UserService userService;
 
+    private final UserGroupService groupService;
+
     public AssistantServiceImpl(AssistantBaseMapMapper mapMapper,
                                 AssistantBuilder assistantBuilder,
                                 KnowledgeBaseService baseService,
                                 ApplicationEventPublisher publisher,
-                                UserService userService) {
+                                UserService userService,
+                                UserGroupService groupService) {
         this.mapMapper = mapMapper;
         this.assistantBuilder = assistantBuilder;
         this.baseService = baseService;
         this.publisher = publisher;
         this.userService = userService;
+        this.groupService = groupService;
     }
 
     @Override
@@ -165,6 +171,35 @@ public class AssistantServiceImpl extends ServiceImpl<AssistantMapper, Assistant
                 .lambdaQuery(Assistant.class)
                 .like(StringUtils.isNotBlank(request.key()), Assistant::getName, "%" + request.key() + "%");
 
+        if (!AuthSupport.superAdmin()) {
+            if (!request.forEdit()) {
+                List<String> groupIds = groupService.groupIdsBy(AuthSupport.userId());
+                query = query
+                        .and(l -> l
+                                .and(c -> c
+                                        .eq(Assistant::getPermit, PermitConst.PUBLIC_RESOURCE)
+                                )
+                                .or(c -> c
+                                        .eq(Assistant::getPermit, PermitConst.PERSONAL_RESOURCE)
+                                        .eq(Assistant::getCreator, AuthSupport.userId())
+                                )
+                                .or(c -> c
+                                        .eq(Assistant::getPermit, PermitConst.GROUP_RESOURCE)
+                                        .in(!groupIds.isEmpty(), Assistant::getGroupId, groupIds)
+                                )
+                        );
+            } else {
+                List<String> groupIds = groupService.groupIdsAdminBy(AuthSupport.userId());
+                if (groupIds.isEmpty()) {
+                    return page.convert(this::from);
+                } else {
+                    query = query.in(Assistant::getGroupId, groupIds);
+                }
+            }
+        } else {
+            log.debug("super admin do not filter group");
+        }
+
         query = request
                 .sort()
                 .sort(query, Assistant::getCreateTime, Assistant::getUpdateTime);
@@ -217,7 +252,7 @@ public class AssistantServiceImpl extends ServiceImpl<AssistantMapper, Assistant
                     .map(AssistantBaseMap::getBaseId)
                     .toList();
 
-            return buildApi(assistant.getLlmModel(), assistant.getSystemPrompt(),baseIds, files);
+            return buildApi(assistant.getLlmModel(), assistant.getSystemPrompt(), baseIds, files);
         } else {
             throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("助手不存在!"));
         }
@@ -235,11 +270,11 @@ public class AssistantServiceImpl extends ServiceImpl<AssistantMapper, Assistant
                 .streamingChatLanguageModel(assistantBuilder.streamingModel(llmModel))
                 // here memory is conversation id
                 .chatMemoryProvider(memoryId -> MessageWindowChatMemory
-                    .builder()
-                    //todo make it configurable
-                    .maxMessages(10)
-                    .chatMemoryStore(chatMemoryStore)
-                    .build());
+                        .builder()
+                        //todo make it configurable
+                        .maxMessages(10)
+                        .chatMemoryStore(chatMemoryStore)
+                        .build());
 
         if (baseIds instanceof List<String> ids && !ids.isEmpty()) {
             List<EmbeddingStoreContentRetriever> stores = ids.stream()

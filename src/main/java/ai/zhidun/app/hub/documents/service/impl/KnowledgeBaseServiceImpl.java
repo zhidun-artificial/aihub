@@ -1,7 +1,9 @@
 package ai.zhidun.app.hub.documents.service.impl;
 
 import ai.zhidun.app.hub.auth.service.AuthSupport;
+import ai.zhidun.app.hub.auth.service.UserGroupService;
 import ai.zhidun.app.hub.auth.service.UserService;
+import ai.zhidun.app.hub.common.PermitConst;
 import ai.zhidun.app.hub.documents.controller.KnowledgeBaseController;
 import ai.zhidun.app.hub.documents.dao.*;
 import ai.zhidun.app.hub.documents.model.KnowledgeBaseVo;
@@ -33,15 +35,18 @@ public class KnowledgeBaseServiceImpl extends
 
   private final UserService userService;
 
+  private final UserGroupService groupService;
+
   public KnowledgeBaseServiceImpl(
-      DocumentAggMapper documentAggMapper,
-      BaseTagMapper tagMapper,
-      VectorStoreService vectorStoreService,
-      UserService userService) {
+          DocumentAggMapper documentAggMapper,
+          BaseTagMapper tagMapper,
+          VectorStoreService vectorStoreService,
+          UserService userService, UserGroupService groupService) {
     this.documentAggMapper = documentAggMapper;
     this.tagMapper = tagMapper;
     this.vectorStoreService = vectorStoreService;
     this.userService = userService;
+      this.groupService = groupService;
   }
 
   public KnowledgeBaseVo from(KnowledgeBase entity) {
@@ -163,6 +168,35 @@ public class KnowledgeBaseServiceImpl extends
         .lambdaQuery(KnowledgeBase.class)
         .like(StringUtils.isNotBlank(request.key()), KnowledgeBase::getName,
             "%" + request.key() + "%");
+
+    if (!AuthSupport.superAdmin()) {
+      if (request.forEdit()) {
+        List<String> groupIds = groupService.groupIdsAdminBy(AuthSupport.userId());
+        if (groupIds.isEmpty()) {
+          return page.convert(this::from);
+        } else {
+          query = query.in(KnowledgeBase::getGroupId, groupIds);
+        }
+      } else {
+        List<String> groupIds = groupService.groupIdsBy(AuthSupport.userId());
+        query = query
+                .and(l -> l
+                        .and(c -> c
+                                .eq(KnowledgeBase::getPermit, PermitConst.PUBLIC_RESOURCE)
+                        )
+                        .or(c -> c
+                                .eq(KnowledgeBase::getPermit, PermitConst.PERSONAL_RESOURCE)
+                                .eq(KnowledgeBase::getCreator, AuthSupport.userId())
+                        )
+                        .or(c -> c
+                                .eq(KnowledgeBase::getPermit, PermitConst.GROUP_RESOURCE)
+                                .in(!groupIds.isEmpty(), KnowledgeBase::getGroupId, groupIds)
+                        )
+                );
+      }
+    } else {
+      log.debug("super admin do not filter group");
+    }
 
     query = request
         .sort()

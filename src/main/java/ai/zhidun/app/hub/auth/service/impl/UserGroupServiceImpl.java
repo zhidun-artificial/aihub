@@ -25,7 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
-import static ai.zhidun.app.hub.auth.service.UserService.GROUP_ADMIN;
+import static ai.zhidun.app.hub.common.PermitConst.GROUP_ADMIN;
+
 
 @Service
 public class UserGroupServiceImpl extends ServiceImpl<UserGroupMapper, UserGroup> implements UserGroupService {
@@ -53,27 +54,31 @@ public class UserGroupServiceImpl extends ServiceImpl<UserGroupMapper, UserGroup
                 .isNotNull(UserGroup::getAlive)
                 .like(StringUtils.isNotBlank(request.key()), UserGroup::getName, "%" + request.key() + "%");
 
+        if (!AuthSupport.superAdmin()) {
+            query = query.eq(UserGroup::getAdminId, AuthSupport.userId());
+        }
+
         query = request.sort()
                 .sort(query, UserGroup::getCreateTime, UserGroup::getUpdateTime);
 
         IPage<UserGroup> groups = this.page(page, query);
-
-        Map<String, List<UserVo>> userMap = new HashMap<>();
 
         List<String> ids = new ArrayList<>();
         for (UserGroup group : groups.getRecords()) {
             ids.add(group.getId());
         }
 
-        // add group admin
-        for (UserInfo admin : userMapper.selectAdminByGroupIds(ids)) {
-            userMap.computeIfAbsent(admin.groupId(), k -> new ArrayList<>())
-                    .add(UserVo.from(admin, GROUP_ADMIN));
-        }
 
+        Map<String, List<UserVo>> userMap = new HashMap<>();
         Map<String, Integer> countMap = new HashMap<>();
 
         if (!ids.isEmpty()) {
+            // add group admin
+            for (UserInfo admin : userMapper.selectAdminByGroupIds(ids)) {
+                userMap.computeIfAbsent(admin.groupId(), k -> new ArrayList<>())
+                        .add(UserVo.from(admin, GROUP_ADMIN));
+            }
+
             LambdaQueryWrapper<UserAgg> wrapper = Wrappers
                     .lambdaQuery(UserAgg.class)
                     .select(UserAgg::getGroupId, UserAgg::getCount)
@@ -222,5 +227,28 @@ public class UserGroupServiceImpl extends ServiceImpl<UserGroupMapper, UserGroup
             mapMapper.insert(entity);
         }
 
+    }
+
+    @Override
+    public List<String> groupIdsAdminBy(String userId) {
+        return this.lambdaQuery()
+                .eq(UserGroup::getAdminId, userId)
+                .list()
+                .stream()
+                .map(UserGroup::getId)
+                .toList();
+    }
+
+    @Override
+    public List<String> groupIdsBy(String userId) {
+        LambdaQueryWrapper<UserGroupMap> query = Wrappers
+                .lambdaQuery(UserGroupMap.class)
+                .eq(UserGroupMap::getUserId, userId)
+                .groupBy(UserGroupMap::getGroupId)
+                .select(UserGroupMap::getGroupId);
+        return mapMapper.selectList(query)
+                .stream()
+                .map(UserGroupMap::getGroupId)
+                .toList();
     }
 }

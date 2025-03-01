@@ -1,11 +1,13 @@
 package ai.zhidun.app.hub.auth.service;
 
+import ai.zhidun.app.hub.auth.model.UserVo;
+
 public interface UserService {
-    int USER = 0;
-    int GROUP_ADMIN = 1;
-    int SUPER_ADMIN = 2;
-    int HIDDEN_USER = -1;
 
     String name(String id);
 
+    UserVo getByName(String name);
+
+    @Deprecated
+    UserVo create(String name, int permit);
 }

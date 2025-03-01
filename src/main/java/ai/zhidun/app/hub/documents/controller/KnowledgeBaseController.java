@@ -57,7 +57,7 @@ public class KnowledgeBaseController {
       @Schema(description = "默认排序创建时间倒序", defaultValue = "CREATED_AT_DESC")
       Sort sort,
       @Schema(description = "查询可编辑的知识库", defaultValue = "false")
-      boolean forEdit) {
+      Boolean forEdit) {
 
     public Integer pageNo() {
       return pageNo != null ? pageNo : 1;
@@ -69,6 +69,10 @@ public class KnowledgeBaseController {
 
     public Sort sort() {
       return sort != null ? sort : Sort.CREATED_AT_DESC;
+    }
+
+    public Boolean forEdit() {
+      return forEdit != null ? forEdit : false;
     }
   }
 
