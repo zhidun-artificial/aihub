@@ -18,12 +18,6 @@ public interface UserService {
 
     void delete(String id);
 
-    record LoginResult(UserVo info, String token) {
-
-    }
-
-    LoginResult login(String username, String password);
-
     String name(String id);
 
     int importByXlsx(MultipartFile file);

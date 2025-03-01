@@ -10,7 +10,7 @@ import ai.zhidun.app.hub.assistant.dao.AssistantMapper;
 import ai.zhidun.app.hub.assistant.model.AssistantDetailVo;
 import ai.zhidun.app.hub.assistant.model.AssistantVo;
 import ai.zhidun.app.hub.assistant.service.AssistantService;
-import ai.zhidun.app.hub.auth.service.JwtSupport;
+import ai.zhidun.app.hub.auth.service.AuthSupport;
 import ai.zhidun.app.hub.auth.service.UserService;
 import ai.zhidun.app.hub.common.BizError;
 import ai.zhidun.app.hub.common.BizException;
@@ -74,7 +74,7 @@ public class AssistantServiceImpl extends ServiceImpl<AssistantMapper, Assistant
         entity.setLlmModel(param.llmModel());
         entity.setExt(param.ext().toPrettyString());
         entity.setDescription(param.description());
-        entity.setCreator(JwtSupport.userId());
+        entity.setCreator(AuthSupport.userId());
         entity.setPermit(param.permit());
         entity.setGroupId(param.groupId());
         entity.setSystemPrompt(param.systemPrompt());

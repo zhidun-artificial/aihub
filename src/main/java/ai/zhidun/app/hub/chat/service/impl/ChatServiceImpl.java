@@ -3,7 +3,7 @@ package ai.zhidun.app.hub.chat.service.impl;
 import ai.zhidun.app.hub.assistant.AssistantApi;
 import ai.zhidun.app.hub.assistant.FileContent;
 import ai.zhidun.app.hub.assistant.service.AssistantService;
-import ai.zhidun.app.hub.auth.service.JwtSupport;
+import ai.zhidun.app.hub.auth.service.AuthSupport;
 import ai.zhidun.app.hub.auth.service.UserService;
 import ai.zhidun.app.hub.chat.controller.ChatController.SearchConversation;
 import ai.zhidun.app.hub.chat.controller.ChatController.SearchMessage;
@@ -155,7 +155,7 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMapper, Conversatio
             Conversation entity = new Conversation();
             entity.setName("新建会话");
             entity.setAssistantId(GLOBAL_DEFAULT_ASSISTANT);
-            entity.setCreator(JwtSupport.userId());
+            entity.setCreator(AuthSupport.userId());
             this.save(entity);
             conversationId = entity.getId();
         }
@@ -179,7 +179,7 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMapper, Conversatio
             Conversation entity = new Conversation();
             entity.setName("新建会话");
             entity.setAssistantId(param.assistantId());
-            entity.setCreator(JwtSupport.userId());
+            entity.setCreator(AuthSupport.userId());
             this.save(entity);
             conversationId = entity.getId();
         }

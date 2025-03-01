@@ -1,6 +1,6 @@
 package ai.zhidun.app.hub.documents.service.impl;
 
-import ai.zhidun.app.hub.auth.service.JwtSupport;
+import ai.zhidun.app.hub.auth.service.AuthSupport;
 import ai.zhidun.app.hub.auth.service.UserService;
 import ai.zhidun.app.hub.documents.controller.KnowledgeBaseController;
 import ai.zhidun.app.hub.documents.dao.BaseTag;
@@ -86,7 +86,7 @@ public class KnowledgeBaseServiceImpl extends
     entity.setPermit(create.permit());
     entity.setGroupId(create.groupId());
     entity.setExt(create.ext().toPrettyString());
-    entity.setCreator(JwtSupport.userId());
+    entity.setCreator(AuthSupport.userId());
     this.save(entity);
 
     if (create.tags() instanceof List<String> list && !list.isEmpty()) {

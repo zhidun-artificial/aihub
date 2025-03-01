@@ -4,7 +4,7 @@ import ai.zhidun.app.hub.auth.controller.UserGroupController.SearchUserGroups;
 import ai.zhidun.app.hub.auth.dao.*;
 import ai.zhidun.app.hub.auth.model.UserGroupVo;
 import ai.zhidun.app.hub.auth.model.UserVo;
-import ai.zhidun.app.hub.auth.service.JwtSupport;
+import ai.zhidun.app.hub.auth.service.AuthSupport;
 import ai.zhidun.app.hub.auth.service.UserGroupService;
 import ai.zhidun.app.hub.auth.service.UserService;
 import ai.zhidun.app.hub.common.BizError;
@@ -134,7 +134,7 @@ public class UserGroupServiceImpl extends ServiceImpl<UserGroupMapper, UserGroup
         entity.setDescription(request.description());
         entity.setExt(request.ext().toString());
         entity.setAdminId(request.adminId());
-        entity.setCreator(JwtSupport.userId());
+        entity.setCreator(AuthSupport.userId());
         this.save(entity);
 
         entity = this.getById(entity.getId());
@@ -198,7 +198,7 @@ public class UserGroupServiceImpl extends ServiceImpl<UserGroupMapper, UserGroup
         if (target == null) {
             throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("组织不存在!"));
         }
-        String currentUserId = JwtSupport.userId();
+        String currentUserId = AuthSupport.userId();
         // todo add superAdmin check
         if (!target.getCreator().equals(currentUserId)) {
             throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("无操作权限!"));

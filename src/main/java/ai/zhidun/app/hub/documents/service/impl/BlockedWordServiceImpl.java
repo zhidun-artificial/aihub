@@ -1,6 +1,6 @@
 package ai.zhidun.app.hub.documents.service.impl;
 
-import ai.zhidun.app.hub.auth.service.JwtSupport;
+import ai.zhidun.app.hub.auth.service.AuthSupport;
 import ai.zhidun.app.hub.common.BizError;
 import ai.zhidun.app.hub.common.BizException;
 import ai.zhidun.app.hub.documents.controller.BlockedWordController;
@@ -37,7 +37,7 @@ public class BlockedWordServiceImpl extends ServiceImpl<BlockedWordMapper, Block
 
         BlockedWord entity = new BlockedWord();
         entity.setValue(blockedWord);
-        entity.setCreator(JwtSupport.userId());
+        entity.setCreator(AuthSupport.userId());
         entity.setEnabled(true);
         this.save(entity);
         return BlockedWordVo.from(entity);
