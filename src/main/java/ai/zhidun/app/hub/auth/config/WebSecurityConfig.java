@@ -17,8 +17,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
-import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 @Configuration
 @EnableWebSecurity
@@ -26,18 +24,15 @@ import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 public class WebSecurityConfig {
 
     @Bean
-    MvcRequestMatcher.Builder mvcRequestMatcherBuilder(HandlerMappingIntrospector introspector) {
-        return new MvcRequestMatcher.Builder(introspector);
-    }
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, HandlerMappingIntrospector introspector, CasUserDetailsService detailsService) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, CasUserDetailsService detailsService) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((requests) -> requests
                         .requestMatchers(
+                                // index
+                                "/index",
                                 // login
-                                "/api/v1/auth/**",
+                                "/api/v1/auth/show_me",
                                 // swagger and openapi 3.0
                                 "/swagger-ui*/**",
                                 "/v3/**",
