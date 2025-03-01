@@ -30,6 +30,7 @@ spring:
     uris: ${ELASTIC_URIS:http://localhost:9200}
     username: ${ELASTIC_USERNAME:elastic}
     password: ${ELASTIC_PASSWORD:changeme}
+    path-prefix: ${ELASTIC_PATH_PREFIX:}
 
 server:
   port: ${SERVER_PORT:9876}
