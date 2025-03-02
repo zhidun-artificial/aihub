@@ -16,6 +16,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
@@ -256,6 +257,12 @@ public class KnowledgeBaseServiceImpl extends
   @Override
   public EmbeddingStore<TextSegment> embeddingStore(String id) {
     return vectorStoreService.build(id);
+  }
+
+  @Override
+  public EmbeddingModel embeddingModel(String id) {
+    KnowledgeBase knowledgeBase = this.getById(id);
+    return vectorStoreService.embeddingModel(knowledgeBase.getEmbedModel());
   }
 
   @Override

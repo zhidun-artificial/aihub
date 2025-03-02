@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -53,6 +54,8 @@ public interface KnowledgeBaseService {
     Optional<KnowledgeBaseVo> getFistByName(String libraryName);
 
     EmbeddingStore<TextSegment> embeddingStore(String id);
+
+    EmbeddingModel embeddingModel(String id);
 
 
     record BaseInfo(String id, String name) {

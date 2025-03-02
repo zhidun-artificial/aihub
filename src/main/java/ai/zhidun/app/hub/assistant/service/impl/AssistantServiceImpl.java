@@ -27,10 +27,12 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;
+import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.memory.chat.InMemoryChatMemoryStore;
 import lombok.SneakyThrows;
 import org.springframework.context.ApplicationEventPublisher;
@@ -277,10 +279,14 @@ public class AssistantServiceImpl extends ServiceImpl<AssistantMapper, Assistant
                         .build());
 
         if (baseIds instanceof List<String> ids && !ids.isEmpty()) {
-            List<EmbeddingStoreContentRetriever> stores = ids.stream()
-                    .map(baseService::embeddingStore)
-                    .map(EmbeddingStoreContentRetriever::from)
-                    .toList();
+            List<EmbeddingStoreContentRetriever> stores = new ArrayList<>();
+            for (String id : ids) {
+                EmbeddingStore<TextSegment> store = baseService.embeddingStore(id);
+                stores.add(EmbeddingStoreContentRetriever.builder()
+                        .embeddingStore(store)
+                        .embeddingModel(baseService.embeddingModel(id))
+                        .build());
+            }
 
             return builder
                     .systemMessageProvider(memoryId -> systemPrompt)
