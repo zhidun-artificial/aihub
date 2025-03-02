@@ -43,7 +43,8 @@ public class VectorStoreService {
         // todo make it configurable
         embeddingModels = Map.of(
                 "bge-small-zh", new BgeSmallZhEmbeddingModel(),
-                "bge-small-en-v15-q", new BgeSmallEnV15QuantizedEmbeddingModel()
+                "bge-small-en-v15-q", new BgeSmallEnV15QuantizedEmbeddingModel(),
+                "default", new BgeSmallEnV15QuantizedEmbeddingModel()
         );
     }
 
