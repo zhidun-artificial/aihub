@@ -111,6 +111,8 @@ public class UserGroupServiceImpl extends ServiceImpl<UserGroupMapper, UserGroup
         return new UserGroupVo(vo.getId(),
                 vo.getName(),
                 userService.name(vo.getCreator()),
+                vo.getAdminId(),
+                userService.name(vo.getAdminId()),
                 vo.getDescription(),
                 jsonMapper.readTree(vo.getExt()),
                 vo.getCreateTime().getTime(),

@@ -48,7 +48,8 @@ public class WebSecurityConfig {
                                 "/swagger-ui*/**",
                                 "/v3/**",
                                 "/manager/api/**",
-                                "/test/**"
+                                "/test/**",
+                                "/api/v1/models/show"
                         )
                         .permitAll()
                         .requestMatchers("/api/**")
