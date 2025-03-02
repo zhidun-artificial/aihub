@@ -154,6 +154,15 @@ public class UserGroupServiceImpl extends ServiceImpl<UserGroupMapper, UserGroup
     public UserGroupVo update(String id, UpdateUserGroup request) {
         if (this.getById(id) instanceof UserGroup group) {
             if (request.name() != null) {
+                LambdaQueryWrapper<UserGroup> query = Wrappers
+                        .lambdaQuery(UserGroup.class)
+                        .eq(UserGroup::getName, request.name())
+                        .ne(UserGroup::getId, group.getId());
+
+                if (super.exists(query)) {
+                    throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("同名的组织已经存在!"));
+                }
+
                 group.setName(request.name());
             }
             if (request.description() != null) {
