@@ -32,6 +32,8 @@ public interface ChatService {
 
     SseEmitter chat(AssistantChatParam param);
 
+    void cancel(String messageId, String text);
+
     IPage<ConversationVo> conversations(ChatController.SearchConversation request);
 
     IPage<MessageVo> messages(ChatController.SearchMessage request);

@@ -61,6 +61,7 @@ public class KnowledgeBaseServiceImpl extends
     return new KnowledgeBaseVo(
         entity.getId(),
         entity.getName(),
+        entity.getEmbedModel(),
         entity.getCreator(),
         creatorName,
         docCount,
@@ -110,14 +111,9 @@ public class KnowledgeBaseServiceImpl extends
   @Override
   @Transactional
   public KnowledgeBaseVo update(UpdateKnowledgeBase update) {
-    // todo update vector store
-
     KnowledgeBase entity = this.getById(update.id());
     if (entity.getName() != null) {
       entity.setName(update.name());
-    }
-    if (entity.getEmbedModel() != null) {
-      entity.setEmbedModel(update.embedModel());
     }
     if (entity.getDescription() != null) {
       entity.setDescription(update.description());

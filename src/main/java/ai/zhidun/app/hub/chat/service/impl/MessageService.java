@@ -74,4 +74,13 @@ public class MessageService extends ServiceImpl<MessageMapper, Message> {
             .set(Message::getAnswer, answer)
             .update();
     }
+
+    @SneakyThrows
+    public void cancelMessage(String messageId, String answer) {
+        this.lambdaUpdate()
+                .eq(Message::getId, messageId)
+                .eq(Message::getAnswer, "")
+                .set(Message::getAnswer, answer)
+                .update();
+    }
 }

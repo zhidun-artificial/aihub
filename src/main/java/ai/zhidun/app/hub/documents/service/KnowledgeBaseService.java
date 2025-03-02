@@ -37,7 +37,6 @@ public interface KnowledgeBaseService {
     record UpdateKnowledgeBase(
             String id,
             String name,
-            String embedModel,
             String description,
             List<String> tags,
             JsonNode ext

@@ -6,6 +6,7 @@ import java.util.List;
 public record KnowledgeBaseVo(
         String id,
         String name,
+        String embedModel,
         String creator,
         String creatorName,
         Integer docCount,
