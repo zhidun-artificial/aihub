@@ -285,6 +285,9 @@ public class AssistantServiceImpl extends ServiceImpl<AssistantMapper, Assistant
                 stores.add(EmbeddingStoreContentRetriever.builder()
                         .embeddingStore(store)
                         .embeddingModel(baseService.embeddingModel(id))
+                        //todo make it configurable
+                        .minScore(0.0)
+                        .maxResults(3)
                         .build());
             }
 

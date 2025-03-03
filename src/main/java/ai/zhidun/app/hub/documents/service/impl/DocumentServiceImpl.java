@@ -6,6 +6,7 @@ import ai.zhidun.app.hub.common.BizError;
 import ai.zhidun.app.hub.common.BizException;
 import ai.zhidun.app.hub.common.CustomIdentifierGenerator;
 import ai.zhidun.app.hub.documents.controller.DocumentController.SearchDocument;
+import ai.zhidun.app.hub.documents.controller.DocumentController.SemanticSearchDocument;
 import ai.zhidun.app.hub.documents.dao.Document;
 import ai.zhidun.app.hub.documents.dao.DocumentMapper;
 import ai.zhidun.app.hub.documents.model.DocumentVo;
@@ -186,6 +187,8 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document> i
         doc.metadata().put("documentId", documentId);
         doc.metadata().put("fileName", document.getFileName());
         doc.metadata().put("url", url);
+        doc.metadata().put("creator", document.getCreator());
+        doc.metadata().put("createTime", document.getCreateTime().getTime());
 
         injestsMap
             .computeIfAbsent(document.getBaseId(), storeService::ingest)
@@ -234,6 +237,18 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document> i
         .set(Document::getStatus, STATUS_PENDING)
         .update();
     this.triggerIngest();
+  }
+
+  @Override
+  public List<DocumentVo> semanticSearch(SemanticSearchDocument request) {
+    if (request.baseIds().isEmpty()) {
+      return List.of();
+    }
+    List<String> ids = storeService.semanticSearch(request);
+    if (ids.isEmpty()) {
+      return List.of();
+    }
+    return this.listByIds(ids).stream().map(this::from).toList();
   }
 
   private IPage<DocumentVo> search(SearchDocument request, String bucket) {

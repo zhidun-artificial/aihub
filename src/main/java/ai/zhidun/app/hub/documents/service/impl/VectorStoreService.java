@@ -2,16 +2,27 @@ package ai.zhidun.app.hub.documents.service.impl;
 
 import ai.zhidun.app.hub.common.BizError;
 import ai.zhidun.app.hub.common.BizException;
+import ai.zhidun.app.hub.documents.controller.DocumentController.SemanticSearchDocument;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.KnnQuery;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.mapping.DynamicMapping;
 import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.MsearchRequest;
+import co.elastic.clients.elasticsearch.core.MsearchResponse;
+import co.elastic.clients.elasticsearch.core.msearch.MultiSearchItem;
+import co.elastic.clients.elasticsearch.core.msearch.MultiSearchResponseItem;
+import co.elastic.clients.elasticsearch.core.msearch.RequestItem;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.GetMappingResponse;
 import co.elastic.clients.json.JsonData;
+import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.embedding.onnx.bgesmallenv15q.BgeSmallEnV15QuantizedEmbeddingModel;
 import dev.langchain4j.model.embedding.onnx.bgesmallzh.BgeSmallZhEmbeddingModel;
+import dev.langchain4j.model.output.Response;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
-import dev.langchain4j.store.embedding.elasticsearch.ElasticsearchConfiguration;
 import dev.langchain4j.store.embedding.elasticsearch.ElasticsearchEmbeddingStore;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.client.RestClient;
@@ -21,8 +32,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -82,13 +92,6 @@ public class VectorStoreService {
     }
 
     private void createIndex(String baseId, String modelId, String indexName) {
-//    DynamicTemplate metadata = DynamicTemplate.of(d -> d
-//        .pathMatch("metadata.*")
-//        .mapping(m -> m
-//            .keyword(k -> k)
-//        )
-//    );
-
         EmbeddingModel model = embeddingModel(modelId);
 
         TypeMapping mapping = TypeMapping.of(m -> m
@@ -103,6 +106,12 @@ public class VectorStoreService {
                                 )
                                 .properties("documentId", f -> f
                                         .keyword(k -> k)
+                                )
+                                .properties("creator", f -> f
+                                    .keyword(k -> k)
+                                )
+                                .properties("createTime", f -> f
+                                    .date(k -> k)
                                 )
                         )
                 )
@@ -186,9 +195,7 @@ public class VectorStoreService {
     /// 触发es的刷新，建议放在批量操作之后
     public void refresh() {
         try {
-            client
-                    .indices()
-                    .refresh();
+            client.indices().refresh();
         } catch (IOException e) {
             log.warn("refresh failed", e);
         }
@@ -196,6 +203,97 @@ public class VectorStoreService {
 
     public boolean exists(String baseId) {
         return isIndexExists(indexName(baseId));
+    }
+
+    public record DocumentInfo(String documentId, Long createTime) {
+
+    }
+
+    public record Result(DocumentInfo metadata) {
+
+    }
+
+    public List<String> semanticSearch(SemanticSearchDocument request){
+
+      MsearchRequest msearchRequest = MsearchRequest.of(b -> {
+            Map<EmbeddingModel, Response<Embedding>> cacheEmbeddings = new HashMap<>(10);
+
+            for (String baseId : request.baseIds()) {
+
+                if (exists(baseId)) {
+                  EmbeddingModel embeddingModel = model(baseId);
+
+                  Response<Embedding> response = cacheEmbeddings.computeIfAbsent(embeddingModel,
+                      model -> model.embed(request.query()));
+                  Query query;
+                  if (request.type() == 0) {
+
+                    KnnQuery.Builder kq = new KnnQuery.Builder()
+                        .field("vector")
+                        .queryVector(response.content().vectorAsList());
+                    query = Query.of(q -> q.knn(kq.build()));
+                  } else {
+                    query = Query.of(q -> q
+                        .match(m -> m.field("text")
+                            .query(request.query())));
+                  }
+
+                  RequestItem item = RequestItem.of(i -> i
+                        .header(h -> h.index(indexName(baseId)))
+                        .body(a -> a
+                            .collapse(f -> f.field("metadata.documentId"))
+                            .size(request.top())
+                            .query(query)
+                            .minScore(request.minScore())
+                            .sort(s -> s
+                                .field(f -> f
+                                    .field("metadata.createTime")
+                                    .order(SortOrder.Desc)
+                                )
+                            )
+                            .source(s -> s
+                                .filter(f -> f.includes("metadata.documentId", "metadata.createTime")))
+                        )
+                    );
+                    b.searches(item);
+                }
+            }
+            return b;
+    });
+
+      PriorityQueue<DocumentInfo> queue = new PriorityQueue<>(request.top(),
+          Comparator.comparing(DocumentInfo::createTime));
+
+      try {
+          MsearchResponse<Result> response = client.msearch(msearchRequest, Result.class);
+
+          for (MultiSearchResponseItem<Result> responseItem : response.responses()) {
+              MultiSearchItem<Result> items = responseItem.result();
+
+              for (Hit<Result> hit : items.hits().hits()) {
+                Result source = hit.source();
+                  if (source != null) {
+                    DocumentInfo metadata = source.metadata();
+                    if (queue.size() < request.top()) {
+                      queue.add(metadata);
+                    } else {
+                      if (Objects.requireNonNull(queue.peek()).createTime() < metadata.createTime()) {
+                        queue.poll();
+                        queue.add(metadata);
+                      }
+                    }
+                  }
+              }
+          }
+
+          return queue
+              .stream()
+              .map(DocumentInfo::documentId)
+              .toList();
+
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     public record IndexMeta(String baseId, String modelId, int dimension) {
@@ -225,10 +323,13 @@ public class VectorStoreService {
 
     }
 
-    public @NonNull EmbeddingStoreIngestor ingest(String baseId) {
+    public @NonNull EmbeddingModel model(String baseId) {
         IndexMeta meta = indexMeta(baseId);
+        return embeddingModel(meta.modelId());
+    }
 
-        EmbeddingModel model = embeddingModel(meta.modelId());
+    public @NonNull EmbeddingStoreIngestor ingest(String baseId) {
+        EmbeddingModel model = model(baseId);
 
         ElasticsearchEmbeddingStore store = build(baseId);
 

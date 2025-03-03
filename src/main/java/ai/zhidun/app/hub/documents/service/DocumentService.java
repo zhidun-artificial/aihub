@@ -1,7 +1,9 @@
 package ai.zhidun.app.hub.documents.service;
 
 import ai.zhidun.app.hub.auth.service.AuthSupport;
+import ai.zhidun.app.hub.documents.controller.DocumentController;
 import ai.zhidun.app.hub.documents.controller.DocumentController.SearchDocument;
+import ai.zhidun.app.hub.documents.controller.DocumentController.SemanticSearchDocument;
 import ai.zhidun.app.hub.documents.model.DocumentVo;
 import ai.zhidun.app.hub.store.utils.FileParser.ParsedResult;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -30,6 +32,8 @@ public interface DocumentService {
     IPage<DocumentVo> searchBlocked(SearchDocument request);
 
     void retryIngest();
+
+    List<DocumentVo> semanticSearch(SemanticSearchDocument request);
 
     record ReplaceResult(DocumentVo replaced, Unknown unknown) {
 

@@ -90,6 +90,28 @@ public class DocumentController {
         return Response.page(service.search(request));
     }
 
+    public record SemanticSearchDocument(
+        @Schema(description = "检索query")
+        String query,
+        @Schema(description = "0-语义检索 1-分词检索")
+        int type,
+        @Schema(description = "知识库ids")
+        List<String> baseIds,
+        @Schema(defaultValue = "0.3", description = "最小相似度")
+        Double minScore,
+        @Schema(defaultValue = "100", description = "从1开始")
+        Integer top) {
+
+        public Integer top() {
+            return top != null ? top : 100;
+        }
+    }
+
+    @PostMapping("/semantic_search")
+    public Response<List<DocumentVo>> search(@RequestBody SemanticSearchDocument request) {
+        return Response.list(service.semanticSearch(request));
+    }
+
     @PostMapping("/blocked_document/search")
     public Response<PageVo<DocumentVo>> searchBlocked(@RequestBody SearchDocument request) {
         return Response.page(service.searchBlocked(request));
