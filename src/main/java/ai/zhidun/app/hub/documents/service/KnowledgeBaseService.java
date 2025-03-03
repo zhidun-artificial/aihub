@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface KnowledgeBaseService {
+    List<String> tags();
 
     record CreateKnowledgeBase(
             String name,
@@ -36,7 +38,6 @@ public interface KnowledgeBaseService {
     record UpdateKnowledgeBase(
             String id,
             String name,
-            String embedModel,
             String description,
             List<String> tags,
             JsonNode ext
@@ -53,6 +54,8 @@ public interface KnowledgeBaseService {
     Optional<KnowledgeBaseVo> getFistByName(String libraryName);
 
     EmbeddingStore<TextSegment> embeddingStore(String id);
+
+    EmbeddingModel embeddingModel(String id);
 
 
     record BaseInfo(String id, String name) {

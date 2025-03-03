@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.springframework.lang.NonNull;
 
+import java.util.List;
+
 public interface UserGroupService {
 
     IPage<UserGroupVo> search(SearchUserGroups request);
@@ -35,4 +37,8 @@ public interface UserGroupService {
     void deleteUser(String groupId, String userId);
 
     void addUser(String groupId, String userId);
+
+    List<String> groupIdsAdminBy(String userId);
+
+    List<String> groupIdsBy(String userId);
 }

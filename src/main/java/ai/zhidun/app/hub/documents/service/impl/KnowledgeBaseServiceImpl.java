@@ -1,14 +1,11 @@
 package ai.zhidun.app.hub.documents.service.impl;
 
-import ai.zhidun.app.hub.auth.service.JwtSupport;
+import ai.zhidun.app.hub.auth.service.AuthSupport;
+import ai.zhidun.app.hub.auth.service.UserGroupService;
 import ai.zhidun.app.hub.auth.service.UserService;
+import ai.zhidun.app.hub.common.PermitConst;
 import ai.zhidun.app.hub.documents.controller.KnowledgeBaseController;
-import ai.zhidun.app.hub.documents.dao.BaseTag;
-import ai.zhidun.app.hub.documents.dao.BaseTagMapper;
-import ai.zhidun.app.hub.documents.dao.DocumentAgg;
-import ai.zhidun.app.hub.documents.dao.DocumentAggMapper;
-import ai.zhidun.app.hub.documents.dao.KnowledgeBase;
-import ai.zhidun.app.hub.documents.dao.KnowledgeBaseMapper;
+import ai.zhidun.app.hub.documents.dao.*;
 import ai.zhidun.app.hub.documents.model.KnowledgeBaseVo;
 import ai.zhidun.app.hub.documents.service.KnowledgeBaseService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -19,15 +16,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingStore;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
 
 @Service
 public class KnowledgeBaseServiceImpl extends
@@ -41,15 +36,18 @@ public class KnowledgeBaseServiceImpl extends
 
   private final UserService userService;
 
+  private final UserGroupService groupService;
+
   public KnowledgeBaseServiceImpl(
-      DocumentAggMapper documentAggMapper,
-      BaseTagMapper tagMapper,
-      VectorStoreService vectorStoreService,
-      UserService userService) {
+          DocumentAggMapper documentAggMapper,
+          BaseTagMapper tagMapper,
+          VectorStoreService vectorStoreService,
+          UserService userService, UserGroupService groupService) {
     this.documentAggMapper = documentAggMapper;
     this.tagMapper = tagMapper;
     this.vectorStoreService = vectorStoreService;
     this.userService = userService;
+      this.groupService = groupService;
   }
 
   public KnowledgeBaseVo from(KnowledgeBase entity) {
@@ -64,6 +62,7 @@ public class KnowledgeBaseServiceImpl extends
     return new KnowledgeBaseVo(
         entity.getId(),
         entity.getName(),
+        entity.getEmbedModel(),
         entity.getCreator(),
         creatorName,
         docCount,
@@ -73,6 +72,17 @@ public class KnowledgeBaseServiceImpl extends
         entity.getUpdateTime().getTime(),
         entity.getPermit(),
         entity.getGroupId());
+  }
+
+  @Override
+  public List<String> tags() {
+    return tagMapper.selectList(Wrappers
+        .lambdaQuery(BaseTag.class)
+        .groupBy(BaseTag::getTag)
+        .select(BaseTag::getTag))
+            .stream()
+            .map(BaseTag::getTag)
+            .toList();
   }
 
   @Override
@@ -86,7 +96,7 @@ public class KnowledgeBaseServiceImpl extends
     entity.setPermit(create.permit());
     entity.setGroupId(create.groupId());
     entity.setExt(create.ext().toPrettyString());
-    entity.setCreator(JwtSupport.userId());
+    entity.setCreator(AuthSupport.userId());
     this.save(entity);
 
     if (create.tags() instanceof List<String> list && !list.isEmpty()) {
@@ -102,14 +112,9 @@ public class KnowledgeBaseServiceImpl extends
   @Override
   @Transactional
   public KnowledgeBaseVo update(UpdateKnowledgeBase update) {
-    // todo update vector store
-
     KnowledgeBase entity = this.getById(update.id());
     if (entity.getName() != null) {
       entity.setName(update.name());
-    }
-    if (entity.getEmbedModel() != null) {
-      entity.setEmbedModel(update.embedModel());
     }
     if (entity.getDescription() != null) {
       entity.setDescription(update.description());
@@ -160,6 +165,35 @@ public class KnowledgeBaseServiceImpl extends
         .lambdaQuery(KnowledgeBase.class)
         .like(StringUtils.isNotBlank(request.key()), KnowledgeBase::getName,
             "%" + request.key() + "%");
+
+    if (!AuthSupport.superAdmin()) {
+      if (request.forEdit()) {
+        List<String> groupIds = groupService.groupIdsAdminBy(AuthSupport.userId());
+        if (groupIds.isEmpty()) {
+          return page.convert(this::from);
+        } else {
+          query = query.in(KnowledgeBase::getGroupId, groupIds);
+        }
+      } else {
+        List<String> groupIds = groupService.groupIdsBy(AuthSupport.userId());
+        query = query
+                .and(l -> l
+                        .and(c -> c
+                                .eq(KnowledgeBase::getPermit, PermitConst.PUBLIC_RESOURCE)
+                        )
+                        .or(c -> c
+                                .eq(KnowledgeBase::getPermit, PermitConst.PERSONAL_RESOURCE)
+                                .eq(KnowledgeBase::getCreator, AuthSupport.userId())
+                        )
+                        .or(c -> c
+                                .eq(KnowledgeBase::getPermit, PermitConst.GROUP_RESOURCE)
+                                .in(!groupIds.isEmpty(), KnowledgeBase::getGroupId, groupIds)
+                        )
+                );
+      }
+    } else {
+      log.debug("super admin do not filter group");
+    }
 
     query = request
         .sort()
@@ -223,6 +257,12 @@ public class KnowledgeBaseServiceImpl extends
   @Override
   public EmbeddingStore<TextSegment> embeddingStore(String id) {
     return vectorStoreService.build(id);
+  }
+
+  @Override
+  public EmbeddingModel embeddingModel(String id) {
+    KnowledgeBase knowledgeBase = this.getById(id);
+    return vectorStoreService.embeddingModel(knowledgeBase.getEmbedModel());
   }
 
   @Override

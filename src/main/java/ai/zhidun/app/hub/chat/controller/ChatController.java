@@ -8,6 +8,7 @@ import ai.zhidun.app.hub.chat.service.ChatService.AssistantChatParam;
 import ai.zhidun.app.hub.chat.service.ChatService.ChatParam;
 import ai.zhidun.app.hub.common.BizError;
 import ai.zhidun.app.hub.common.Response;
+import ai.zhidun.app.hub.common.Response.Empty;
 import ai.zhidun.app.hub.common.Response.PageVo;
 import ai.zhidun.app.hub.common.Sort;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -101,6 +102,15 @@ public class ChatController {
     @PostMapping(value = "/conversations/chat")
     public SseEmitter newChat(@RequestBody ChatParam param) {
         return service.chat(param);
+    }
+
+    public record CancelChat(String messageId, String answer) {
+    }
+
+    @PostMapping(value = "/conversations/cancel")
+    public Response<Empty> newChat(@RequestBody CancelChat param) {
+        service.cancel(param.messageId, param.answer);
+        return Response.ok();
     }
 
   @ApiResponses(value = {

@@ -1,7 +1,8 @@
 package ai.zhidun.app.hub.auth.filter;
 
 import ai.zhidun.app.hub.auth.config.JwtProperties;
-import ai.zhidun.app.hub.auth.service.JwtService;
+import ai.zhidun.app.hub.auth.service.CasAuthToken;
+import ai.zhidun.app.hub.auth.service.TokenService;
 import ai.zhidun.app.hub.common.BizError;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import jakarta.servlet.*;
@@ -10,10 +11,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jose4j.jwt.consumer.InvalidJwtException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.authorization.AuthorizationResult;
 import org.springframework.security.core.context.SecurityContext;
@@ -23,16 +22,15 @@ import org.springframework.web.filter.GenericFilterBean;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 
+@Setter
 @Slf4j
 public class JwtAuthenticationFilter extends GenericFilterBean {
 
-    private JwtService service;
+    private TokenService service;
 
     private JwtProperties properties;
 
-    @Setter
     private AuthorizationManager<HttpServletRequest> manager;
 
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
@@ -61,16 +59,8 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
         }
 
         try {
-            JwtService.AuthedClaimInfo claimInfo = service.decode(jwt);
-            if (claimInfo.isNeedRefresh(properties.refreshInterval())) {
-                String newJwt = service.encode(claimInfo.into());
-                response.setHeader(properties.head(), newJwt);
-            }
-
-            // 构建UsernamePasswordAuthenticationToken,这里密码为null，是因为提供了正确的JWT,实现自动登录
-            UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
-                    claimInfo, null, Collections.emptyList());
-            context.setAuthentication(token);
+            TokenService.AuthedClaimInfo claimInfo = service.decode(jwt);
+            context.setAuthentication(new CasAuthToken(claimInfo));
             chain.doFilter(request, response);
         } catch (InvalidJwtException e) {
             if (e.hasExpired()) {
@@ -83,6 +73,7 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
         }
 
     }
+
     private final static JsonMapper mapper = new JsonMapper();
 
     public static void write(HttpServletResponse response, String msg) {
@@ -96,16 +87,6 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
         } catch (IOException e) {
             log.warn("write error failed", e);
         }
-    }
-
-    @Autowired
-    public void setService(JwtService service) {
-        this.service = service;
-    }
-
-    @Autowired
-    public void setProperties(JwtProperties properties) {
-        this.properties = properties;
     }
 
     @Override

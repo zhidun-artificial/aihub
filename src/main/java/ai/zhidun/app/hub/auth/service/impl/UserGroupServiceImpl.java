@@ -4,8 +4,9 @@ import ai.zhidun.app.hub.auth.controller.UserGroupController.SearchUserGroups;
 import ai.zhidun.app.hub.auth.dao.*;
 import ai.zhidun.app.hub.auth.model.UserGroupVo;
 import ai.zhidun.app.hub.auth.model.UserVo;
-import ai.zhidun.app.hub.auth.service.JwtSupport;
+import ai.zhidun.app.hub.auth.service.AuthSupport;
 import ai.zhidun.app.hub.auth.service.UserGroupService;
+import ai.zhidun.app.hub.auth.dao.UserMapper;
 import ai.zhidun.app.hub.auth.service.UserService;
 import ai.zhidun.app.hub.common.BizError;
 import ai.zhidun.app.hub.common.BizException;
@@ -24,7 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
-import static ai.zhidun.app.hub.auth.service.UserService.GROUP_ADMIN;
+import static ai.zhidun.app.hub.common.PermitConst.GROUP_ADMIN;
+
 
 @Service
 public class UserGroupServiceImpl extends ServiceImpl<UserGroupMapper, UserGroup> implements UserGroupService {
@@ -52,27 +54,31 @@ public class UserGroupServiceImpl extends ServiceImpl<UserGroupMapper, UserGroup
                 .isNotNull(UserGroup::getAlive)
                 .like(StringUtils.isNotBlank(request.key()), UserGroup::getName, "%" + request.key() + "%");
 
+        if (!AuthSupport.superAdmin()) {
+            query = query.eq(UserGroup::getAdminId, AuthSupport.userId());
+        }
+
         query = request.sort()
                 .sort(query, UserGroup::getCreateTime, UserGroup::getUpdateTime);
 
         IPage<UserGroup> groups = this.page(page, query);
-
-        Map<String, List<UserVo>> userMap = new HashMap<>();
 
         List<String> ids = new ArrayList<>();
         for (UserGroup group : groups.getRecords()) {
             ids.add(group.getId());
         }
 
-        // add group admin
-        for (UserInfo admin : userMapper.selectAdminByGroupIds(ids)) {
-            userMap.computeIfAbsent(admin.groupId(), k -> new ArrayList<>())
-                    .add(UserVo.from(admin, GROUP_ADMIN));
-        }
 
+        Map<String, List<UserVo>> userMap = new HashMap<>();
         Map<String, Integer> countMap = new HashMap<>();
 
         if (!ids.isEmpty()) {
+            // add group admin
+            for (UserInfo admin : userMapper.selectAdminByGroupIds(ids)) {
+                userMap.computeIfAbsent(admin.groupId(), k -> new ArrayList<>())
+                        .add(UserVo.from(admin, GROUP_ADMIN));
+            }
+
             LambdaQueryWrapper<UserAgg> wrapper = Wrappers
                     .lambdaQuery(UserAgg.class)
                     .select(UserAgg::getGroupId, UserAgg::getCount)
@@ -105,6 +111,8 @@ public class UserGroupServiceImpl extends ServiceImpl<UserGroupMapper, UserGroup
         return new UserGroupVo(vo.getId(),
                 vo.getName(),
                 userService.name(vo.getCreator()),
+                vo.getAdminId(),
+                userService.name(vo.getAdminId()),
                 vo.getDescription(),
                 jsonMapper.readTree(vo.getExt()),
                 vo.getCreateTime().getTime(),
@@ -134,7 +142,7 @@ public class UserGroupServiceImpl extends ServiceImpl<UserGroupMapper, UserGroup
         entity.setDescription(request.description());
         entity.setExt(request.ext().toString());
         entity.setAdminId(request.adminId());
-        entity.setCreator(JwtSupport.userId());
+        entity.setCreator(AuthSupport.userId());
         this.save(entity);
 
         entity = this.getById(entity.getId());
@@ -146,6 +154,15 @@ public class UserGroupServiceImpl extends ServiceImpl<UserGroupMapper, UserGroup
     public UserGroupVo update(String id, UpdateUserGroup request) {
         if (this.getById(id) instanceof UserGroup group) {
             if (request.name() != null) {
+                LambdaQueryWrapper<UserGroup> query = Wrappers
+                        .lambdaQuery(UserGroup.class)
+                        .eq(UserGroup::getName, request.name())
+                        .ne(UserGroup::getId, group.getId());
+
+                if (super.exists(query)) {
+                    throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("同名的组织已经存在!"));
+                }
+
                 group.setName(request.name());
             }
             if (request.description() != null) {
@@ -198,7 +215,7 @@ public class UserGroupServiceImpl extends ServiceImpl<UserGroupMapper, UserGroup
         if (target == null) {
             throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("组织不存在!"));
         }
-        String currentUserId = JwtSupport.userId();
+        String currentUserId = AuthSupport.userId();
         // todo add superAdmin check
         if (!target.getCreator().equals(currentUserId)) {
             throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("无操作权限!"));
@@ -221,5 +238,28 @@ public class UserGroupServiceImpl extends ServiceImpl<UserGroupMapper, UserGroup
             mapMapper.insert(entity);
         }
 
+    }
+
+    @Override
+    public List<String> groupIdsAdminBy(String userId) {
+        return this.lambdaQuery()
+                .eq(UserGroup::getAdminId, userId)
+                .list()
+                .stream()
+                .map(UserGroup::getId)
+                .toList();
+    }
+
+    @Override
+    public List<String> groupIdsBy(String userId) {
+        LambdaQueryWrapper<UserGroupMap> query = Wrappers
+                .lambdaQuery(UserGroupMap.class)
+                .eq(UserGroupMap::getUserId, userId)
+                .groupBy(UserGroupMap::getGroupId)
+                .select(UserGroupMap::getGroupId);
+        return mapMapper.selectList(query)
+                .stream()
+                .map(UserGroupMap::getGroupId)
+                .toList();
     }
 }

@@ -3,11 +3,16 @@ package ai.zhidun.app.hub.auth.service;
 import ai.zhidun.app.hub.auth.config.JwtProperties;
 import ai.zhidun.app.hub.common.BizError;
 import ai.zhidun.app.hub.common.BizException;
+import jakarta.annotation.PostConstruct;
+import org.apereo.cas.client.util.CommonUtils;
+import org.apereo.cas.client.validation.Assertion;
+import org.apereo.cas.client.validation.Cas30ServiceTicketValidator;
+import org.apereo.cas.client.validation.TicketValidationException;
+import org.apereo.cas.client.validation.TicketValidator;
 import org.jose4j.jwa.AlgorithmConstraints;
 import org.jose4j.jwk.EcJwkGenerator;
 import org.jose4j.jwk.EllipticCurveJsonWebKey;
-import org.jose4j.jwk.JsonWebKey.Factory;
-import org.jose4j.jwk.JsonWebKey.OutputControlLevel;
+import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
@@ -19,7 +24,12 @@ import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.keys.EllipticCurves;
 import org.jose4j.lang.JoseException;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.cas.ServiceProperties;
+import org.springframework.security.cas.authentication.CasAssertionAuthenticationToken;
+import org.springframework.security.cas.web.CasAuthenticationEntryPoint;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -27,10 +37,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.security.spec.InvalidKeySpecException;
-import java.time.Duration;
 
 @Service
-public class JwtService {
+public class TokenService {
 
     private record JwtSerde(JsonWebSignature jws, JwtConsumer consumer) {
 
@@ -42,7 +51,8 @@ public class JwtService {
 
     private final JwtProperties properties;
 
-    public JwtService(JwtProperties properties) {
+    public TokenService(JwtProperties properties, CasUserDetailsService detailsService) {
+        this.detailsService = detailsService;
         this.holder = ThreadLocal.withInitial(this::newSerde);
         this.properties = properties;
         try {
@@ -57,12 +67,12 @@ public class JwtService {
         Path path = properties.jwtKey();
         if (path.toFile().exists()) {
             // recover from file
-            return (PublicJsonWebKey) Factory.newJwk(Files.readString(path));
+            return (PublicJsonWebKey) JsonWebKey.Factory.newJwk(Files.readString(path));
         } else {
             // new key and save to file
             EllipticCurveJsonWebKey curveJsonWebKey = EcJwkGenerator.generateJwk(EllipticCurves.P256);
             Files.writeString(path,
-                    curveJsonWebKey.toJson(OutputControlLevel.INCLUDE_PRIVATE),
+                    curveJsonWebKey.toJson(JsonWebKey.OutputControlLevel.INCLUDE_PRIVATE),
                     StandardOpenOption.CREATE,
                     StandardOpenOption.WRITE);
             curveJsonWebKey.setKeyId(properties.keyId());
@@ -100,30 +110,7 @@ public class JwtService {
         return new JwtSerde(jws, consumer);
     }
 
-    public sealed interface ClaimInfo permits CommonClaimInfo, WeixinClaimInfo {
-
-        String name();
-
-        String userId();
-
-        static ClaimInfo common(String name, String userId) {
-            return new CommonClaimInfo(name, userId);
-        }
-
-        static ClaimInfo weixin(String name, String userId, String openId) {
-            return new WeixinClaimInfo(name, userId, openId);
-        }
-    }
-
-    public record CommonClaimInfo(String name, String userId) implements ClaimInfo {
-
-    }
-
-    public record WeixinClaimInfo(String name, String userId, String openId) implements ClaimInfo {
-
-    }
-
-    public String encode(ClaimInfo info) {
+    public String encode(YsUserDetail info) {
         // Create the Claims, which will be the content of the JWT
         JwtClaims claims = new JwtClaims();
         // who creates the token and signs it
@@ -139,11 +126,10 @@ public class JwtService {
         // time before which the token is not yet valid (2 minutes ago)
         claims.setNotBeforeMinutesInThePast(2);
         // the subject/principal is whom the token is about
-        claims.setSubject(info.name());
+        claims.setSubject(info.userName());
         claims.setClaim("userId", info.userId());
-        if (info instanceof WeixinClaimInfo w) {
-            claims.setClaim("openId", w.openId());
-        }
+        claims.setClaim("st", info.st());
+        claims.setClaim("permit", info.permit());
         JwtSerde jwtSerde = holder.get();
         jwtSerde.jws.setPayload(claims.toJson());
         try {
@@ -153,64 +139,84 @@ public class JwtService {
         }
     }
 
-    public sealed interface AuthedClaimInfo permits CommonAuthedClaimInfo, WeixinAuthedClaimInfo {
-        String name();
+    public record AuthedClaimInfo(String name, String userId, int permit, String st, NumericDate expirationTime) {
 
-        String userId();
-
-        boolean isNeedRefresh(Duration duration);
-
-        ClaimInfo into();
-    }
-
-    public record CommonAuthedClaimInfo(String name, String userId, NumericDate expirationTime)
-            implements AuthedClaimInfo {
-
-        @Override
-        public boolean isNeedRefresh(Duration duration) {
-            NumericDate now = NumericDate.now();
-            now.addSeconds(duration.getSeconds());
-            return now.isOnOrAfter(expirationTime);
-
-        }
-
-        @Override
-        public ClaimInfo into() {
-            return ClaimInfo.common(name, userId);
-        }
-    }
-
-    public record WeixinAuthedClaimInfo(String name, String userId, String openId, NumericDate expirationTime)
-            implements AuthedClaimInfo {
-
-        @Override
-        public boolean isNeedRefresh(Duration duration) {
-            NumericDate now = NumericDate.now();
-            now.addSeconds(duration.getSeconds());
-            return now.isOnOrAfter(expirationTime);
-
-        }
-
-        @Override
-        public ClaimInfo into() {
-            return ClaimInfo.weixin(name, userId, openId);
-        }
     }
 
     public AuthedClaimInfo decode(String jwt) throws InvalidJwtException {
-        JwtClaims claims = holder.get().consumer().processToClaims(jwt);
         try {
-            String userId = claims.getClaimValue("userId", String.class);
+            JwtClaims claims = holder.get().consumer().processToClaims(jwt);
             String subject = claims.getSubject();
-            if (claims.hasClaim("openId")) {
-                String openId = claims.getClaimValue("openId", String.class);
-                return new WeixinAuthedClaimInfo(subject, userId, openId, claims.getExpirationTime());
-            } else {
-                return new CommonAuthedClaimInfo(subject, userId, claims.getExpirationTime());
-            }
+            String userId = claims.getClaimValue("userId", String.class);
+            String st = claims.getClaimValue("st", String.class);
+            int permit = Math.toIntExact(claims.getClaimValue("permit", Long.class));
+            return new AuthedClaimInfo(subject, userId, permit, st, claims.getExpirationTime());
         } catch (MalformedClaimException e) {
             throw new RuntimeException(e);
         }
     }
 
+    private final CasUserDetailsService detailsService;
+
+    @Value("${cas.base.url}")
+    private String casBaseUrl;
+
+    @Value("${cas.login.url}")
+    private String casLoginUrl;
+
+    @Value("${cas.service:http://localhost:${server.port}/api/auth/token}")
+    private String service;
+
+    private TicketValidator ticketValidator;
+
+    @Value("${cas.validate.url}")
+    private String casValidateUrl;
+
+    @PostConstruct
+    public void init() {
+        this.ticketValidator = new Cas30ServiceTicketValidator(casValidateUrl);
+    }
+
+    public record TokenResult(String token, YsUserDetail detail) {
+
+    }
+
+    public TokenResult token(String serverTicket, String service) {
+        try {
+            service = service == null ? this.service : service;
+            Assertion assertion = ticketValidator.validate(serverTicket, service);
+            YsUserDetail detail = detailsService.loadUserDetails(new CasAssertionAuthenticationToken(assertion, serverTicket));
+            return new TokenResult(encode(detail), detail);
+        } catch (TicketValidationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Value("${cas.login.url}")
+    private String loginUrl;
+
+    @Bean
+    public CasAuthenticationEntryPoint casAuthenticationEntryPoint() {
+        CasAuthenticationEntryPoint casAuthenticationEntryPoint = new CasAuthenticationEntryPoint();
+        casAuthenticationEntryPoint.setLoginUrl(this.casLoginUrl);
+        casAuthenticationEntryPoint.setServiceProperties(serviceProperties());
+        return casAuthenticationEntryPoint;
+    }
+
+    private ServiceProperties serviceProperties() {
+        ServiceProperties serviceProperties = new ServiceProperties();
+        serviceProperties.setService(service);
+        return serviceProperties;
+    }
+
+    private String createRedirectUrl() {
+        ServiceProperties serviceProperties = serviceProperties();
+        return CommonUtils.constructRedirectUrl(
+                this.loginUrl,  serviceProperties.getServiceParameter(), serviceProperties.getService(),
+                serviceProperties.isSendRenew(), false);
+    }
+
+    public String loginUrl() {
+        return createRedirectUrl();
+    }
 }

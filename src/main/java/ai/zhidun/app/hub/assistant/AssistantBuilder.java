@@ -17,7 +17,7 @@ public class AssistantBuilder {
 
     public StreamingChatLanguageModel streamingModel(String llmModel) {
 
-        String modelName = llmModel != null ? llmModel : properties.getModelName();
+        String modelName = llmModel != null ? llmModel : properties.getDefaultModel();
 
         return OllamaStreamingChatModel.builder()
                 .httpClientBuilder(httpClientBuilder)

@@ -8,6 +8,8 @@ public record UserGroupVo(
         String id,
         String name,
         String creatorName,
+        String adminId,
+        String adminName,
         String description,
         JsonNode ext,
         Long createTime,

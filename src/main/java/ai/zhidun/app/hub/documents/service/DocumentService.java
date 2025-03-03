@@ -1,6 +1,6 @@
 package ai.zhidun.app.hub.documents.service;
 
-import ai.zhidun.app.hub.auth.service.JwtSupport;
+import ai.zhidun.app.hub.auth.service.AuthSupport;
 import ai.zhidun.app.hub.documents.controller.DocumentController.SearchDocument;
 import ai.zhidun.app.hub.documents.model.DocumentVo;
 import ai.zhidun.app.hub.store.utils.FileParser.ParsedResult;
@@ -46,7 +46,7 @@ public interface DocumentService {
     }
 
     default SaveResult save(MultipartFile[] files, @RequestParam String libraryId) {
-        return save(files, libraryId, JwtSupport.userId());
+        return save(files, libraryId, AuthSupport.userId());
     }
 
     SaveResult save(MultipartFile[] files, @RequestParam String libraryId, String userId);

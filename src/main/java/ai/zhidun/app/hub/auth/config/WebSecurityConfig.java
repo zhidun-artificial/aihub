@@ -1,6 +1,7 @@
 package ai.zhidun.app.hub.auth.config;
 
 import ai.zhidun.app.hub.auth.filter.JwtAuthenticationFilter;
+import ai.zhidun.app.hub.auth.service.TokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -17,17 +18,16 @@ import org.springframework.security.web.authentication.AnonymousAuthenticationFi
 
 @Configuration
 @EnableWebSecurity
-@EnableConfigurationProperties({JwtProperties.class})
+@EnableConfigurationProperties(JwtProperties.class)
 public class WebSecurityConfig {
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter();
-    }
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        JwtAuthenticationFilter jwtAuthenticationFilter = jwtAuthenticationFilter();
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   TokenService service,
+                                                   JwtProperties properties) throws Exception {
+        JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter();
+        jwtAuthenticationFilter.setService(service);
+        jwtAuthenticationFilter.setProperties(properties);
         var objectPostProcessor = new ObjectPostProcessor<>() {
             @Override
             public <O> O postProcess(O object) {
@@ -43,12 +43,13 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests((requests) -> requests
                         .requestMatchers(
                                 // login
-                                "/api/v1/auth/**",
+                                "/api/auth/**",
                                 // swagger and openapi 3.0
                                 "/swagger-ui*/**",
                                 "/v3/**",
                                 "/manager/api/**",
-                                "/test/**"
+                                "/test/**",
+                                "/api/v1/models/show"
                         )
                         .permitAll()
                         .requestMatchers("/api/**")

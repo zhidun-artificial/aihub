@@ -48,14 +48,22 @@ public class AssistantController {
             Integer pageNo,
             @Schema(defaultValue = "20")
             Integer pageSize,
-            Sort sort) {
+            Sort sort,
+            @Schema(description = "查询可编辑的知识库", defaultValue = "false")
+            Boolean forEdit) {
 
-        public SearchAssistant(String key, Integer pageNo, Integer pageSize, Sort sort) {
-            this.key = key;
-            this.pageNo = pageNo != null ? pageNo : 1;
-            this.pageSize = pageSize != null ? pageSize : 20;
-            this.sort = sort != null ? sort : Sort.CREATED_AT_DESC;
+        public Integer pageNo() {
+            return pageNo != null ? pageNo : 1;
         }
+
+        public Integer pageSize() {
+            return pageSize != null ? pageSize : 20;
+        }
+
+        public Boolean forEdit() {
+            return forEdit != null ? forEdit : false;
+        }
+
     }
 
     @PostMapping("/search")

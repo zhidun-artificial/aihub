@@ -3,7 +3,7 @@ package ai.zhidun.app.hub.chat.service.impl;
 import ai.zhidun.app.hub.assistant.AssistantApi;
 import ai.zhidun.app.hub.assistant.FileContent;
 import ai.zhidun.app.hub.assistant.service.AssistantService;
-import ai.zhidun.app.hub.auth.service.JwtSupport;
+import ai.zhidun.app.hub.auth.service.AuthSupport;
 import ai.zhidun.app.hub.auth.service.UserService;
 import ai.zhidun.app.hub.chat.controller.ChatController.SearchConversation;
 import ai.zhidun.app.hub.chat.controller.ChatController.SearchMessage;
@@ -30,18 +30,21 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.service.TokenStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 @Slf4j
 @Service
@@ -63,7 +66,9 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMapper, Conversatio
         this.userService = userService;
     }
 
-    private final Executor executor = Executors.newVirtualThreadPerTaskExecutor();
+    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+
+    private final ConcurrentHashMap<String, Future<?>> tasks = new ConcurrentHashMap<>();
 
     private SseEmitter doChat(AssistantApi api, String conversationId, String query) {
         SseEmitter emitter = new SseEmitter();
@@ -82,7 +87,7 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMapper, Conversatio
                 })
                 .onPartialResponse(text -> {
                     try {
-                        emitter.send(new PartialMessageEvent(messageId,conversationId,text), MediaType.APPLICATION_JSON);
+                        emitter.send(new PartialMessageEvent(messageId, conversationId, text), MediaType.APPLICATION_JSON);
                     } catch (IOException e) {
                         log.warn("Failed to send partial response", e);
                     }
@@ -101,8 +106,27 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMapper, Conversatio
                 //todo may define some error event
                 .onError(emitter::completeWithError);
 
-        executor.execute(stream::start);
+        Future<?> future = executor.submit(() -> {
+                    try {
+                        stream.start();
+                    } finally {
+                        tasks.remove(messageId);
+                    }
+                }
+        );
+
+        tasks.put(messageId, future);
+
         return emitter;
+    }
+
+    @Override
+    public void cancel(String messageId, String text) {
+        if (tasks.get(messageId) instanceof Future<?> future) {
+            log.info("Cancel task {}", messageId);
+            future.cancel(true);
+            messageService.cancelMessage(messageId, text);
+        }
     }
 
     private QueryContext into(List<Content> contents) {
@@ -137,7 +161,7 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMapper, Conversatio
     private void ensureConversationExists(String conversationId, String assistantId) {
         if (this.getById(conversationId) instanceof Conversation conversation) {
             if (!Objects.equals(assistantId, conversation.getAssistantId())) {
-                throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("会话[" + conversationId + "]和助手[" + assistantId+"]不匹配!"));
+                throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("会话[" + conversationId + "]和助手[" + assistantId + "]不匹配!"));
             }
         } else {
             throw new BizException(HttpStatus.BAD_REQUEST, BizError.error("会话[" + conversationId + "]不存在!"));
@@ -155,15 +179,15 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMapper, Conversatio
             Conversation entity = new Conversation();
             entity.setName("新建会话");
             entity.setAssistantId(GLOBAL_DEFAULT_ASSISTANT);
-            entity.setCreator(JwtSupport.userId());
+            entity.setCreator(AuthSupport.userId());
             this.save(entity);
             conversationId = entity.getId();
         }
 
         AssistantApi api = assistantService.buildApi(param.llmModel(),
-            "你是一个很厉害的助手，尽量使用中文回答",
-            param.baseIds(),
-            param.files());
+                "你是一个很厉害的助手，尽量使用中文回答",
+                param.baseIds(),
+                param.files());
 
         return doChat(api, conversationId, param.query());
     }
@@ -179,7 +203,7 @@ public class ChatServiceImpl extends ServiceImpl<ConversationMapper, Conversatio
             Conversation entity = new Conversation();
             entity.setName("新建会话");
             entity.setAssistantId(param.assistantId());
-            entity.setCreator(JwtSupport.userId());
+            entity.setCreator(AuthSupport.userId());
             this.save(entity);
             conversationId = entity.getId();
         }

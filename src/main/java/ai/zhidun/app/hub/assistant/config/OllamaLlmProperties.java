@@ -10,7 +10,9 @@ public class OllamaLlmProperties {
   private String baseUrl;
 
   /// default model
-  private String modelName;
+  private String defaultModel;
+
+  private List<String> models;
 
   private Boolean logRequests;
 
