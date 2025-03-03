@@ -4,11 +4,9 @@ import ai.zhidun.app.hub.auth.config.JwtProperties;
 import ai.zhidun.app.hub.common.BizError;
 import ai.zhidun.app.hub.common.BizException;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.apereo.cas.client.util.CommonUtils;
-import org.apereo.cas.client.validation.Assertion;
-import org.apereo.cas.client.validation.Cas30ServiceTicketValidator;
-import org.apereo.cas.client.validation.TicketValidationException;
-import org.apereo.cas.client.validation.TicketValidator;
+import org.apereo.cas.client.validation.*;
 import org.jose4j.jwa.AlgorithmConstraints;
 import org.jose4j.jwk.EcJwkGenerator;
 import org.jose4j.jwk.EllipticCurveJsonWebKey;
@@ -39,6 +37,7 @@ import java.nio.file.StandardOpenOption;
 import java.security.spec.InvalidKeySpecException;
 
 @Service
+@Slf4j
 public class TokenService {
 
     private record JwtSerde(JsonWebSignature jws, JwtConsumer consumer) {
@@ -172,9 +171,21 @@ public class TokenService {
     @Value("${cas.validate.url}")
     private String casValidateUrl;
 
+    @Value("${cas.validate.type}")
+    private String casValidateType;
+
     @PostConstruct
     public void init() {
-        this.ticketValidator = new Cas30ServiceTicketValidator(casValidateUrl);
+        if ("cas3".equalsIgnoreCase(casValidateType)) {
+            this.ticketValidator = new Cas30ServiceTicketValidator(casValidateUrl);
+        } else if ("cas2".equalsIgnoreCase(casValidateType)) {
+            this.ticketValidator = new Cas20ServiceTicketValidator(casValidateUrl);
+        } else if ("cas1".equalsIgnoreCase(casValidateType)) {
+            this.ticketValidator = new Cas10TicketValidator(casValidateUrl);
+        } else {
+            log.warn("unknown cas validate type: {} use Cas3.0", casValidateType);
+            this.ticketValidator = new Cas30ServiceTicketValidator(casValidateUrl);
+        }
     }
 
     public record TokenResult(String token, YsUserDetail detail) {

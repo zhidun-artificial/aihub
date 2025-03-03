@@ -97,3 +97,4 @@ cas:
     url: ${CAS_BASE_URL:http://113.108.105.54:56800/cas}
   validate:
     url: ${CAS_VALIDATE_URL:http://113.108.105.54:56800/cas}
+    type: ${CAS_VALIDATE_TYPE:cas2}
